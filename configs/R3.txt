@@ -1,22 +1,39 @@
 ! ====================================================================
-! R3 - P  (Provider core)
-! IS-IS L2 + SR-MPLS + TI-LFA
-! Loopback0 3.3.3.3/32  |  prefix-SID index 3 (label 16003)
+! R3 - P  (Provider core)  -- FINAL (Phases 1-6)
+! IS-IS L2 + SR-MPLS + TI-LFA  (IPv4)  +  SRv6 transport (IPv6)
+! IPv4 Lo0 3.3.3.3/32 (prefix-SID 16003) | SRv6 locator fcbb:bb00:3::/48
 ! Links: Gi0/0/0/0->R2 (cross-link), Gi0/0/0/2->R1, Gi0/0/0/4->R4
 ! ====================================================================
 hostname R3
 !
+segment-routing
+ srv6
+  encapsulation
+   source-address fcbb:bb00:3::1
+  !
+  locators
+   locator MAIN
+    micro-segment behavior unode psp-usd
+    prefix fcbb:bb00:3::/48
+   !
+  !
+ !
+!
 interface Loopback0
  ipv4 address 3.3.3.3 255.255.255.255
+ ipv6 address fcbb:bb00:3::1/128
 !
 interface GigabitEthernet0/0/0/0
  ipv4 address 10.23.0.2 255.255.255.252
+ ipv6 enable
 !
 interface GigabitEthernet0/0/0/2
  ipv4 address 10.13.0.2 255.255.255.252
+ ipv6 enable
 !
 interface GigabitEthernet0/0/0/4
  ipv4 address 10.34.0.1 255.255.255.252
+ ipv6 enable
 !
 router isis CORE
  is-type level-2-only
@@ -25,10 +42,18 @@ router isis CORE
   metric-style wide
   segment-routing mpls
  !
+ address-family ipv6 unicast
+  metric-style wide
+  segment-routing srv6
+   locator MAIN
+  !
+ !
  interface Loopback0
   passive
   address-family ipv4 unicast
    prefix-sid index 3
+  !
+  address-family ipv6 unicast
   !
  !
  interface GigabitEthernet0/0/0/0
@@ -37,6 +62,8 @@ router isis CORE
    fast-reroute per-prefix
    fast-reroute per-prefix ti-lfa
   !
+  address-family ipv6 unicast
+  !
  !
  interface GigabitEthernet0/0/0/2
   point-to-point
@@ -44,12 +71,16 @@ router isis CORE
    fast-reroute per-prefix
    fast-reroute per-prefix ti-lfa
   !
+  address-family ipv6 unicast
+  !
  !
  interface GigabitEthernet0/0/0/4
   point-to-point
   address-family ipv4 unicast
    fast-reroute per-prefix
    fast-reroute per-prefix ti-lfa
+  !
+  address-family ipv6 unicast
   !
  !
 !

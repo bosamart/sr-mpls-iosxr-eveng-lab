@@ -1,7 +1,8 @@
 ! ====================================================================
-! R4 - PE  (Provider Edge)
-! IS-IS L2 + SR-MPLS + TI-LFA + L3VPN (CUST-A)
-! Loopback0 4.4.4.4/32  |  prefix-SID index 4 (label 16004)
+! R4 - PE  (Provider Edge)  -- FINAL (Phases 1-6)
+! Phase 1-5 : IS-IS L2 + SR-MPLS + TI-LFA + L3VPN (MPLS)
+! Phase 6   : SRv6 transport + L3VPN over SRv6 (uDT4)
+! IPv4 Lo0 4.4.4.4/32 (prefix-SID 16004) | SRv6 locator fcbb:bb00:4::/48
 ! Links: Gi0/0/0/1->CE2 (VRF), Gi0/0/0/2->R2, Gi0/0/0/3->R3
 ! ====================================================================
 hostname R4
@@ -20,8 +21,22 @@ route-policy PASS
   pass
 end-policy
 !
+segment-routing
+ srv6
+  encapsulation
+   source-address fcbb:bb00:4::1
+  !
+  locators
+   locator MAIN
+    micro-segment behavior unode psp-usd
+    prefix fcbb:bb00:4::/48
+   !
+  !
+ !
+!
 interface Loopback0
  ipv4 address 4.4.4.4 255.255.255.255
+ ipv6 address fcbb:bb00:4::1/128
 !
 interface GigabitEthernet0/0/0/1
  vrf CUST-A
@@ -29,9 +44,11 @@ interface GigabitEthernet0/0/0/1
 !
 interface GigabitEthernet0/0/0/2
  ipv4 address 10.24.0.2 255.255.255.252
+ ipv6 enable
 !
 interface GigabitEthernet0/0/0/3
  ipv4 address 10.34.0.2 255.255.255.252
+ ipv6 enable
 !
 router isis CORE
  is-type level-2-only
@@ -40,10 +57,18 @@ router isis CORE
   metric-style wide
   segment-routing mpls
  !
+ address-family ipv6 unicast
+  metric-style wide
+  segment-routing srv6
+   locator MAIN
+  !
+ !
  interface Loopback0
   passive
   address-family ipv4 unicast
    prefix-sid index 4
+  !
+  address-family ipv6 unicast
   !
  !
  interface GigabitEthernet0/0/0/2
@@ -52,12 +77,16 @@ router isis CORE
    fast-reroute per-prefix
    fast-reroute per-prefix ti-lfa
   !
+  address-family ipv6 unicast
+  !
  !
  interface GigabitEthernet0/0/0/3
   point-to-point
   address-family ipv4 unicast
    fast-reroute per-prefix
    fast-reroute per-prefix ti-lfa
+  !
+  address-family ipv6 unicast
   !
  !
 !
@@ -69,12 +98,17 @@ router bgp 100
   remote-as 100
   update-source Loopback0
   address-family vpnv4 unicast
+   encapsulation-type srv6
   !
  !
  vrf CUST-A
   rd 100:1
   address-family ipv4 unicast
    redistribute connected
+   segment-routing srv6
+    locator MAIN
+    alloc mode per-vrf
+   !
   !
   neighbor 192.168.44.2
    remote-as 65002

@@ -1,7 +1,8 @@
 ! ====================================================================
-! R1 - PE  (Provider Edge)
-! IS-IS L2 + SR-MPLS + TI-LFA + SR-TE policy + L3VPN (CUST-A)
-! Loopback0 1.1.1.1/32  |  prefix-SID index 1 (label 16001)
+! R1 - PE  (Provider Edge)  -- FINAL (Phases 1-6)
+! Phase 1-5 : IS-IS L2 + SR-MPLS + TI-LFA + SR-TE + L3VPN (MPLS)
+! Phase 6   : SRv6 transport + L3VPN over SRv6 (uDT4)
+! IPv4 Lo0 1.1.1.1/32 (prefix-SID 16001) | SRv6 locator fcbb:bb00:1::/48
 ! ====================================================================
 hostname R1
 !
@@ -19,72 +20,18 @@ route-policy PASS
   pass
 end-policy
 !
-interface Loopback0
- ipv4 address 1.1.1.1 255.255.255.255
-!
-interface GigabitEthernet0/0/0/0
- vrf CUST-A
- ipv4 address 192.168.11.1 255.255.255.252
-!
-interface GigabitEthernet0/0/0/1
- ipv4 address 10.12.0.1 255.255.255.252
-!
-interface GigabitEthernet0/0/0/3
- ipv4 address 10.13.0.1 255.255.255.252
-!
-router isis CORE
- is-type level-2-only
- net 49.0001.0000.0000.0001.00
- address-family ipv4 unicast
-  metric-style wide
-  segment-routing mpls
- !
- interface Loopback0
-  passive
-  address-family ipv4 unicast
-   prefix-sid index 1
+segment-routing
+ srv6
+  encapsulation
+   source-address fcbb:bb00:1::1
   !
- !
- interface GigabitEthernet0/0/0/1
-  point-to-point
-  address-family ipv4 unicast
-   fast-reroute per-prefix
-   fast-reroute per-prefix ti-lfa
-  !
- !
- interface GigabitEthernet0/0/0/3
-  point-to-point
-  address-family ipv4 unicast
-   fast-reroute per-prefix
-   fast-reroute per-prefix ti-lfa
-  !
- !
-!
-router bgp 100
- bgp router-id 1.1.1.1
- address-family vpnv4 unicast
- !
- neighbor 4.4.4.4
-  remote-as 100
-  update-source Loopback0
-  address-family vpnv4 unicast
-  !
- !
- vrf CUST-A
-  rd 100:1
-  address-family ipv4 unicast
-   redistribute connected
-  !
-  neighbor 192.168.11.2
-   remote-as 65001
-   address-family ipv4 unicast
-    route-policy PASS in
-    route-policy PASS out
+  locators
+   locator MAIN
+    micro-segment behavior unode psp-usd
+    prefix fcbb:bb00:1::/48
    !
   !
  !
-!
-segment-routing
  traffic-eng
   segment-list SCENIC-R1-TO-R4
    index 10 mpls label 16002
@@ -100,6 +47,91 @@ segment-routing
     preference 100
      explicit segment-list SCENIC-R1-TO-R4
     !
+   !
+  !
+ !
+!
+interface Loopback0
+ ipv4 address 1.1.1.1 255.255.255.255
+ ipv6 address fcbb:bb00:1::1/128
+!
+interface GigabitEthernet0/0/0/0
+ vrf CUST-A
+ ipv4 address 192.168.11.1 255.255.255.252
+!
+interface GigabitEthernet0/0/0/1
+ ipv4 address 10.12.0.1 255.255.255.252
+ ipv6 enable
+!
+interface GigabitEthernet0/0/0/3
+ ipv4 address 10.13.0.1 255.255.255.252
+ ipv6 enable
+!
+router isis CORE
+ is-type level-2-only
+ net 49.0001.0000.0000.0001.00
+ address-family ipv4 unicast
+  metric-style wide
+  segment-routing mpls
+ !
+ address-family ipv6 unicast
+  metric-style wide
+  segment-routing srv6
+   locator MAIN
+  !
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid index 1
+  !
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  point-to-point
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+  address-family ipv6 unicast
+  !
+ !
+!
+router bgp 100
+ bgp router-id 1.1.1.1
+ address-family vpnv4 unicast
+ !
+ neighbor 4.4.4.4
+  remote-as 100
+  update-source Loopback0
+  address-family vpnv4 unicast
+   encapsulation-type srv6
+  !
+ !
+ vrf CUST-A
+  rd 100:1
+  address-family ipv4 unicast
+   redistribute connected
+   segment-routing srv6
+    locator MAIN
+    alloc mode per-vrf
+   !
+  !
+  neighbor 192.168.11.2
+   remote-as 65001
+   address-family ipv4 unicast
+    route-policy PASS in
+    route-policy PASS out
    !
   !
  !
