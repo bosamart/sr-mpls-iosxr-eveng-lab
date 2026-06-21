@@ -298,7 +298,7 @@ show route
 - [x] **Phase 3** — TI-LFA backup path verified, zero loss on link failure
 - [x] **Phase 4** — SR-TE policy steers traffic R1→R2→R3→R4 (against IGP)
 - [x] **Phase 5** — CE1↔CE2 L3VPN ping success across the SR core
-- [ ] **Phase 6** — L3VPN over SRv6 _(stretch goal — not yet built)_
+- [x] **Phase 6** — same L3VPN over SRv6 (uDT4 service SID, no MPLS)
 
 ### Phase 1 — IS-IS baseline
 
@@ -379,6 +379,29 @@ R1# show bgp vpnv4 unicast        (RD 100:1, vrf CUST-A)
 R1# show route vrf CUST-A
 B  22.22.22.22/32 [200/0] via 4.4.4.4 (nexthop in vrf default)
 ```
+
+### Phase 6 — L3VPN over SRv6
+
+The *same* CE1↔CE2 VPN, transport swapped from MPLS to SRv6. BGP allocates a `uDT4`
+service SID (the SRv6 form of `End.DT4`: decapsulate + IPv4 VRF lookup), and the
+ingress PE encapsulates the customer packet into IPv6 toward that single SID — no
+MPLS label stack. Locator (reach R4) and function (VRF lookup) live in one address.
+
+```
+R4# show segment-routing srv6 sid
+fcbb:bb00:4::         uN     'default':4      <- node SID (was 16004 in MPLS)
+fcbb:bb00:4:e002::    uDT4   'CUST-A'         <- VPN service SID (was the VPN label)
+
+R1# show cef vrf CUST-A 22.22.22.22 detail
+  22.22.22.22/32 ... SRv6 Headend
+    SRv6 H.Encaps.Red SID-list {fcbb:bb00:4:e002::}   <- encap toward R4's uDT4
+
+CE1# ping 22.22.22.22 source 11.11.11.11
+Success rate is 100 percent (5/5)
+```
+
+**Result:** one VRF, validated over both SR-MPLS and SRv6 data planes — a
+transport-agnostic L3VPN service.
 
 ---
 
