@@ -1,0 +1,36 @@
+RP/0/RP0/CPU0:R4#show isis fast-reroute summary
+4.4.4.4 detailSun Jun 21 22:01:04.305 UTC
+
+IS-IS CORE IPv4 Unicast FRR summary
+
+                          Critical   High       Medium     Low        Total
+                          Priority   Priority   Priority   Priority
+Prefixes reachable in L2
+  All paths protected     0          0          3          3          6
+  Some paths protected    0          0          0          0          0
+  Unprotected             0          0          0          0          0
+  Protection coverage     0.00%      0.00%      100.00%    100.00%    100.00%
+RP/0/RP0/CPU0:R4#show cef 4.4.4.4 detail
+Sun Jun 21 22:01:04.956 UTC
+4.4.4.4/32, version 6, attached, receive
+  Updated Jun 21 18:57:28.745
+  Prefix Len 32
+  internal 0x3006041 (ptr 0xda0d1d8) [3], 0x400 (0xe59d698), 0x0 (0x0)
+, receive adjacency, internal 0x3006041 0x0 (ptr 0xda0d1d8) [3], 0x400 (0xe59d698), 0x0 (0x0)
+ Updated Jun 21 18:57:28.745
+ Prefix Len 32, traffic index 0, precedence n/a, priority 0
+  gateway array (0xe430698) reference count 1, flags 0x0, source rib (7), 0 backups
+                [2 type 3 flags 0x8401 (0xe4d5720) ext 0x0 (0x0)]
+  LW-LDI[type=3, refc=1, ptr=0xe59d698, sh-ldi=0xe4d5720]
+  gateway array update type-time 1 Jun 21 18:57:28.744
+ LDI Update time Jun 21 18:57:28.744
+ LW-LDI-TS Jun 21 18:57:28.744
+   via Loopback0, 23 dependencies, weight 0, class 0 [flags 0x8]
+    path-idx 0 NHID 0x0 [0xd8df368 0x0]
+     receive adjacency
+
+    Load distribution: 0 (refcount 2)
+
+    Hash  OK  Interface                 Address
+    0     Y   recursive                 receive
+RP/0/RP0/CPU0:R4#
