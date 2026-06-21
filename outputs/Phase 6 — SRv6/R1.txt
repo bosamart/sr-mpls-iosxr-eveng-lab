@@ -1,1 +1,74 @@
+RP/0/RP0/CPU0:R1#
+RP/0/RP0/CPU0:R1#show segment-routing srv6 locator
+ment-routing srv6 sid
+show route ipv6Sun Jun 21 22:07:11.794 UTC
+Name                  ID       Algo  Prefix                    Status   Flags
+--------------------  -------  ----  ------------------------  -------  --------
+MAIN                  1        0     fcbb:bb00:1::/48          Up       U
+RP/0/RP0/CPU0:R1#show segment-routing srv6 sid
+Sun Jun 21 22:07:12.249 UTC
 
+*** Locator: 'MAIN' ***
+
+SID                         Behavior          Context                           Owner               State  RW
+--------------------------  ----------------  --------------------------------  ------------------  -----  --
+fcbb:bb00:1::               uN (PSP/USD)      'default':1                       sidmgr              InUse  Y
+fcbb:bb00:1:e000::          uA (PSP/USD)      [Gi0/0/0/1, Link-Local]:0         isis-CORE           InUse  Y
+fcbb:bb00:1:e001::          uA (PSP/USD)      [Gi0/0/0/3, Link-Local]:0         isis-CORE           InUse  Y
+fcbb:bb00:1:e002::          uDT4              'CUST-A'                          bgp-100             InUse  Y
+RP/0/RP0/CPU0:R1#show route ipv6
+Sun Jun 21 22:07:12.931 UTC
+
+Codes: C - connected, S - static, R - RIP, B - BGP, (>) - Diversion path
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, E - EGP
+       i - ISIS, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, su - IS-IS summary null, * - candidate default
+       U - per-user static route, o - ODR, L - local, G  - DAGR, l - LISP
+       A - access/subscriber, a - Application route
+       M - mobile route, r - RPL, t - Traffic Engineering, (!) - FRR Backup path
+       s - local SRv6 route, z - local IID route
+
+Gateway of last resort is not set
+
+s    fcbb:bb00:1::/48, SRv6 Endpoint uN (shift)
+      [0/0] via ::, 03:17:18
+s    fcbb:bb00:1::/64, SRv6 Endpoint uN (PSP/USD)
+      [0/0] via ::, 03:17:18
+L    fcbb:bb00:1::1/128 is directly connected,
+      00:50:48, Loopback0
+s    fcbb:bb00:1:e000::/64, SRv6 Endpoint uA (shift)
+      [0/0] via fe80::5200:ff:fe03:3, 00:47:45, GigabitEthernet0/0/0/1
+s    fcbb:bb00:1:e000::/80, SRv6 Endpoint uA (PSP/USD)
+      [0/0] via fe80::5200:ff:fe03:3, 00:47:45, GigabitEthernet0/0/0/1
+s    fcbb:bb00:1:e001::/64, SRv6 Endpoint uA (shift)
+      [0/0] via fe80::5200:ff:fe04:5, 00:47:08, GigabitEthernet0/0/0/3
+s    fcbb:bb00:1:e001::/80, SRv6 Endpoint uA (PSP/USD)
+      [0/0] via fe80::5200:ff:fe04:5, 00:47:08, GigabitEthernet0/0/0/3
+s    fcbb:bb00:1:e002::/64, SRv6 Endpoint uDT4
+      [0/0] via ::ffff:0.0.0.0 (nexthop in vrf CUST-A), 00:41:52
+i L2 fcbb:bb00:2::/48
+      [115/11] via fe80::5200:ff:fe03:3, 00:47:44, GigabitEthernet0/0/0/1
+i L2 fcbb:bb00:2::1/128
+      [115/10] via fe80::5200:ff:fe03:3, 00:47:44, GigabitEthernet0/0/0/1
+i L2 fcbb:bb00:3::/48
+      [115/11] via fe80::5200:ff:fe04:5, 00:47:08, GigabitEthernet0/0/0/3
+i L2 fcbb:bb00:3::1/128
+      [115/10] via fe80::5200:ff:fe04:5, 00:47:08, GigabitEthernet0/0/0/3
+i L2 fcbb:bb00:4::/48
+      [115/21] via fe80::5200:ff:fe04:5, 00:46:45, GigabitEthernet0/0/0/3
+      [115/21] via fe80::5200:ff:fe03:3, 00:46:45, GigabitEthernet0/0/0/1
+i L2 fcbb:bb00:4::1/128
+      [115/20] via fe80::5200:ff:fe04:5, 00:46:45, GigabitEthernet0/0/0/3
+      [115/20] via fe80::5200:ff:fe03:3, 00:46:45, GigabitEthernet0/0/0/1
+s    fcbb:bb00:e000::/48, SRv6 Endpoint uA (shift)
+      [0/0] via fe80::5200:ff:fe03:3, 00:47:45, GigabitEthernet0/0/0/1
+s    fcbb:bb00:e000::/64, SRv6 Endpoint uA (PSP/USD)
+      [0/0] via fe80::5200:ff:fe03:3, 00:47:45, GigabitEthernet0/0/0/1
+s    fcbb:bb00:e001::/48, SRv6 Endpoint uA (shift)
+      [0/0] via fe80::5200:ff:fe04:5, 00:47:08, GigabitEthernet0/0/0/3
+s    fcbb:bb00:e001::/64, SRv6 Endpoint uA (PSP/USD)
+      [0/0] via fe80::5200:ff:fe04:5, 00:47:08, GigabitEthernet0/0/0/3
+RP/0/RP0/CPU0:R1#
+RP/0/RP0/CPU0:R1#
