@@ -207,26 +207,34 @@ policy and a segment list.
 headend pushes a label stack describing the path; transit routers just forward on
 labels. This is how operators do latency-based / disjoint-path steering today.
 
-Target config (headend R1, steering via R3):
+Target config (headend R1, "scenic" path R1→R2→R3→R4 via node-SIDs):
 
 ```
 segment-routing
  traffic-eng
-  segment-list PATH-VIA-R3
-   index 10 mpls label 16003     ! prefix-SID of R3
-   index 20 mpls label 16004     ! prefix-SID of R4
+  segment-list SCENIC-R1-TO-R4
+   index 10 mpls label 16002     ! prefix-SID of R2
+   index 20 mpls label 16003     ! prefix-SID of R3
+   index 30 mpls label 16004     ! prefix-SID of R4
   !
-  policy R1-TO-R4-VIA-R3
+  policy R1-TO-R4-SCENIC
    color 100 end-point ipv4 4.4.4.4
+   autoroute
+    include ipv4 4.4.4.4/32       ! lab steering; production uses color/ODN
+   !
    candidate-paths
     preference 100
-     explicit segment-list PATH-VIA-R3
+     explicit segment-list SCENIC-R1-TO-R4
     !
    !
   !
  !
 !
 ```
+
+Defining the policy isn't enough — traffic only follows it once steered. `autoroute`
+is the lab-simple method; in production, color-based BGP automated steering (ODN)
+pulls coloured routes into the matching policy.
 
 **Verify**
 
@@ -285,14 +293,92 @@ show route
 
 ## Results
 
-_Add your own outputs and EVE-NG screenshots here as you complete each phase:_
+- [x] **Phase 1** — IS-IS adjacencies up, loopbacks reachable
+- [x] **Phase 2** — SR-MPLS labels (16001–16004), traceroute shows labels
+- [x] **Phase 3** — TI-LFA backup path verified, zero loss on link failure
+- [x] **Phase 4** — SR-TE policy steers traffic R1→R2→R3→R4 (against IGP)
+- [x] **Phase 5** — CE1↔CE2 L3VPN ping success across the SR core
+- [ ] **Phase 6** — L3VPN over SRv6 _(stretch goal — not yet built)_
 
-- [ ] Phase 1 — IS-IS adjacencies up, loopbacks reachable
-- [ ] Phase 2 — SR-MPLS labels (16001–16004), traceroute shows labels
-- [ ] Phase 3 — TI-LFA backup path verified, <50 ms reroute
-- [ ] Phase 4 — SR-TE policy steers R1→R4 via R3
-- [ ] Phase 5 — CE1↔CE2 L3VPN ping success
-- [ ] Phase 6 — L3VPN over SRv6
+### Phase 1 — IS-IS baseline
+
+Equal-cost paths to R4 via both R2 and R3 confirm the diamond is working:
+
+```
+R1# show route isis
+i L2 4.4.4.4/32 [115/20] via 10.13.0.2, GigabitEthernet0/0/0/3
+                [115/20] via 10.12.0.2, GigabitEthernet0/0/0/1
+R1# ping 4.4.4.4 source 1.1.1.1
+Success rate is 100 percent (5/5)
+```
+
+### Phase 2 — SR-MPLS enabled
+
+Globally-agreed prefix-SID labels, and a traceroute now carrying an MPLS label —
+with no LDP or RSVP anywhere in the config:
+
+```
+R1# show isis segment-routing label table
+16001  1.1.1.1/32   SPF
+16002  2.2.2.2/32   SPF
+16003  3.3.3.3/32   SPF
+16004  4.4.4.4/32   SPF
+
+R1# traceroute 4.4.4.4 source 1.1.1.1
+ 1  10.12.0.2 [MPLS: Label 16004 Exp 0]
+ 2  10.24.0.2
+```
+
+### Phase 3 — TI-LFA fast reroute
+
+100% protection coverage; a pre-computed backup installed for single-path prefixes.
+(The backup shows as `Local-LFA` because the R2–R3 cross-link provides a directly
+loop-free alternate — TI-LFA only builds an explicit repair tunnel when none exists.)
+
+```
+R1# show isis fast-reroute summary
+  All paths protected ...  Total 6   Protection coverage 100.00%
+
+R1# show cef 2.2.2.2/32 detail
+   via 10.13.0.2 ... backup (Local-LFA)   labels imposed {16002}
+   via 10.12.0.2 ... protected            labels imposed {ImplNull}
+
+R1# ping 2.2.2.2 source 1.1.1.1 count 1000   (link shut mid-test)
+Success rate is 100 percent (1000/1000)
+```
+
+### Phase 4 — SR-TE traffic engineering
+
+Traffic forced onto the 3-hop "scenic" path the IGP would never choose. Watch the
+label stack shrink as each node-SID is consumed:
+
+```
+R1# show route 4.4.4.4
+  4.4.4.4, via srte_c_100_ep_4.4.4.4
+
+R1# traceroute 4.4.4.4 source 1.1.1.1
+ 1  10.12.0.2 [MPLS: Labels 16003/16004]   <- R2
+ 2  10.23.0.2 [MPLS: Label 16004]          <- R3 (cross-link)
+ 3  10.34.0.2                              <- R4
+```
+
+### Phase 5 — L3VPN over SR
+
+Customer CE1 reaches CE2's loopback across the SR core, inside VRF `CUST-A`. The VPN
+route resolves its next-hop *in the global table* (`nexthop in vrf default`) — the
+two-label (transport + VPN) separation that keeps the core stateless:
+
+```
+CE1# ping 22.22.22.22 source 11.11.11.11
+Success rate is 100 percent (5/5)
+
+R1# show bgp vpnv4 unicast        (RD 100:1, vrf CUST-A)
+*> 11.11.11.11/32   192.168.11.2        0  65001 i
+*>i22.22.22.22/32   4.4.4.4        100   0  65002 i
+
+R1# show route vrf CUST-A
+B  22.22.22.22/32 [200/0] via 4.4.4.4 (nexthop in vrf default)
+```
 
 ---
 
@@ -315,4 +401,4 @@ _Add your own outputs and EVE-NG screenshots here as you complete each phase:_
 
 ---
 
-*Lab built and documented by BO SAM ATH. Feedback welcome via issues/PRs.*
+*Lab built and documented by [your name]. Feedback welcome via issues/PRs.*
