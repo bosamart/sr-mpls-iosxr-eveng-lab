@@ -1,1 +1,43 @@
 
+RP/0/RP0/CPU0:R1#show segment-routing traffic-eng policy
+Sun Jun 21 22:02:33.973 UTC
+
+SR-TE policy database
+---------------------
+
+Color: 100, End-point: 4.4.4.4
+  Name: srte_c_100_ep_4.4.4.4
+  Status:
+    Admin: up  Operational: up for 02:17:58 (since Jun 21 19:44:35.505)
+  Candidate-paths:
+    Preference: 100 (configuration) (active)
+      Name: R1-TO-R4-SCENIC
+      Requested BSID: dynamic
+      Constraints:
+        Protection Type: protected-preferred
+        Maximum SID Depth: 10
+      Explicit: segment-list SCENIC-R1-TO-R4 (valid)
+        Weight: 1, Metric Type: TE
+          SID[0]: 16002
+          SID[1]: 16003
+          SID[2]: 16004
+  Attributes:
+    Binding SID: 24005
+    Forward Class: Not Configured
+    Steering labeled-services disabled: no
+    Steering BGP disabled: no
+    IPv6 caps enable: yes
+    Invalidation drop enabled: no
+    Max Install Standby Candidate Paths: 0
+    Path Type: SRMPLSv4
+
+RP/0/RP0/CPU0:R1#traceroute 4.4.4.4
+Sun Jun 21 22:02:34.771 UTC
+
+Type escape sequence to abort.
+Tracing the route to 4.4.4.4
+
+ 1  10.12.0.2 [MPLS: Labels 16003/16004 Exp 0] 12 msec  8 msec  4 msec
+ 2  10.23.0.2 [MPLS: Label 16004 Exp 0] 7 msec  15 msec  11 msec
+ 3  10.34.0.2 6 msec  *  6 msec
+RP/0/RP0/CPU0:R1#
