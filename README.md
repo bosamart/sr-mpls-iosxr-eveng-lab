@@ -1,9 +1,10 @@
-# Segment Routing (SR-MPLS) on Cisco IOS XRv9000 — EVE-NG Lab
+# Segment Routing (SR-MPLS & SRv6) on Cisco IOS XRv9000 — EVE-NG Lab
 
-A hands-on lab building a service-provider style core that forwards MPLS traffic
-using **Segment Routing (SR-MPLS)** — no LDP, no RSVP-TE. The lab progresses from a
-plain IGP up to traffic engineering and L3VPN services riding on an SR underlay,
-mirroring how modern mobile/transport networks are built.
+A hands-on lab building a service-provider style core that forwards traffic using
+**Segment Routing** — no LDP, no RSVP-TE. It progresses from a plain IGP up to
+traffic engineering and an L3VPN, then carries that same VPN over **both** the
+SR-MPLS and the SRv6 (IPv6-native) data planes — mirroring how modern
+mobile/transport networks are built.
 
 > **Goal:** learn SR the way operators actually deploy it, and produce a clean,
 > reproducible writeup. Every phase lists *what* to configure, *why* it matters,
@@ -18,7 +19,7 @@ mirroring how modern mobile/transport networks are built.
 - Fast convergence with **TI-LFA** (sub-50 ms reroute)
 - **SR-TE** explicit-path policies and traffic steering
 - L3VPN (MP-BGP VPNv4) over an SR transport
-- Intro to **SRv6**
+- **SRv6**: locators, uSID, and an L3VPN over SRv6 (uDT4 / End.DT4)
 - Lab build & automation in EVE-NG with Cisco IOS XRv9000
 
 ---
@@ -30,12 +31,13 @@ mirroring how modern mobile/transport networks are built.
 | Emulator | EVE-NG (Community/Pro) |
 | Node image | Cisco IOS XRv9000 (`xrv9k-fullk9-7.x`, reduced-resource build) |
 | Core/PE nodes | 4 × XRv9000 (R1–R4), 4 vCPU, 8–16 GB RAM each |
-| CE nodes | 2 × lightweight IOS (IOL/vIOS) |
+| CE nodes | 2 × Cisco IOS XRv9000 (CE1, CE2) |
 | IGP | IS-IS Level-2-only |
 | Transport | SR-MPLS (default SRGB 16000–23999) |
 
-> **Resource note:** XRv9000 is RAM-hungry. If your host is tight, build R1/R2/R4
-> first (phases 1–3) and add R3 later for the SR-TE path-diversity work.
+> **Resource note:** XRv9000 is RAM-hungry, and all four core nodes are needed for
+> the diamond (the R2–R3 cross-link is what makes TI-LFA and SR-TE work). If your
+> host is tight, use the reduced-resource ("RR") image and lower per-node RAM.
 
 ---
 
@@ -136,7 +138,7 @@ router isis CORE
    prefix-sid index 1
   !
  !
- interface GigabitEthernet0/0/0/0
+ interface GigabitEthernet0/0/0/1
   point-to-point
   address-family ipv4 unicast
   !
@@ -174,7 +176,7 @@ guarantees a loop-free alternate even in topologies where classic LFA fails.
 Add under each core interface's address-family:
 
 ```
- interface GigabitEthernet0/0/0/0
+ interface GigabitEthernet0/0/0/1
   point-to-point
   address-family ipv4 unicast
    fast-reroute per-prefix
@@ -187,11 +189,14 @@ Add under each core interface's address-family:
 
 ```
 show isis fast-reroute summary
-show cef 4.4.4.4/32 detail        ! note the backup (repair) path + label
+show cef 2.2.2.2/32 detail        ! single-path prefix shows the repair path
 ```
 
-Then prove it: start a ping flood from CE1 to CE2, `shutdown` one core link, and
-confirm only a packet or two is lost.
+Check a *single-path* prefix like `2.2.2.2` — an ECMP prefix like `4.4.4.4` is already
+protected by its second path, so the backup is clearest on a one-way prefix.
+
+Then prove it: `ping 2.2.2.2 source 1.1.1.1 count 1000` from R1, `shutdown` the
+R1→R2 link mid-ping, and confirm near-zero loss.
 
 > **Check your understanding:** look at the *repair label stack* in the CEF output.
 > Which node does the backup path steer through, and why that one?
@@ -240,7 +245,7 @@ pulls coloured routes into the matching policy.
 
 ```
 show segment-routing traffic-eng policy
-traceroute 4.4.4.4 source 1.1.1.1     ! should now traverse R3, not R2
+traceroute 4.4.4.4 source 1.1.1.1     ! now 3 hops: R1->R2->R3->R4
 ```
 
 ---
@@ -271,22 +276,25 @@ End-to-end CE-to-CE ping across the SR core = lab success.
 
 ---
 
-## Phase 6 — SRv6 (stretch goal)
+## Phase 6 — L3VPN over SRv6
 
-**Objective:** repeat a simple L3VPN, but over **SRv6** instead of SR-MPLS.
+**Objective:** carry the *same* L3VPN, but over **SRv6** instead of SR-MPLS.
 
-**Why it matters:** mobile transport is moving toward SRv6 (and uSID). Even basic
-familiarity — locators, the IPv6-native data plane, no MPLS label stack — stands out
-on a CV for an operator role.
+**Why it matters:** mobile transport is moving toward SRv6 (and uSID). Locators, the
+IPv6-native data plane, and a single SID carrying both reachability and service
+(no MPLS label stack) stand out on a CV for an operator role.
 
-Building blocks: enable `segment-routing srv6`, define a locator per node, advertise
-it in IS-IS, then build the VPN over SRv6.
+Building blocks: enable `segment-routing srv6` with a locator per node, advertise it
+in IS-IS (IPv6 address-family), then bind the VRF to SRv6 in BGP (`alloc mode per-vrf`
+plus `encapsulation-type srv6` on the VPNv4 neighbor). On XRv9000 you may first need
+`hw-module profile segment-routing srv6 mode micro-segment format f3216` and a reload.
 
 **Verify**
 
 ```
-show segment-routing srv6 locator
-show route
+show segment-routing srv6 sid             ! uN node SID + uDT4 VRF service SID
+show cef vrf CUST-A 22.22.22.22 detail    ! SRv6 H.Encaps toward the egress uDT4 SID
+ping 22.22.22.22 source 11.11.11.11       ! from CE1 — now over SRv6, no MPLS
 ```
 
 ---
@@ -424,4 +432,4 @@ transport-agnostic L3VPN service.
 
 ---
 
-*Lab built and documented by BO SAM ATH. Feedback welcome via issues/PRs.*
+*Lab built and documented by [your name]. Feedback welcome via issues/PRs.*
