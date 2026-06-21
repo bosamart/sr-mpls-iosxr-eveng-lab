@@ -31,3 +31,35 @@ Label  Label       or ID              Interface                    Switched
 24005  Pop         No ID              srte_c_100_e point2point     0
 24006  Pop         4.4.4.4/32         srte_c_100_e 4.4.4.4         1040
 RP/0/RP0/CPU0:R1#
+RP/0/RP0/CPU0:R1#show cef 4.4.4.4/32 detail
+Sun Jun 21 21:55:42.348 UTC
+4.4.4.4/32, version 22, labeled SR, internal 0x1000001 0x8110 (ptr 0xe41cca8) [1], 0x600 (0xe59dbd8), 0xa20 (0xeb2f2d8)
+ Updated Jun 21 19:50:10.242
+ Prefix Len 32, traffic index 0, precedence n/a, priority 1
+ Extensions: context-label:16004
+  gateway array (0xe431898) reference count 3, flags 0x68, source lsd (5), 1 backups
+                [3 type 4 flags 0x8401 (0xeb6da90) ext 0x0 (0x0)]
+  LW-LDI[type=1, refc=1, ptr=0xe59dbd8, sh-ldi=0xeb6da90]
+  gateway array update type-time 1 Jun 21 19:50:10.242
+ LDI Update time Jun 21 19:50:10.242
+ LW-LDI-TS Jun 21 19:50:10.242
+   via 4.4.4.4/32, srte_c_100_ep_4.4.4.4, 5 dependencies, weight 0, class 0 [flags 0x0]
+    path-idx 0 NHID 0x0 [0xfa48430 0xfa48300]
+    next hop 4.4.4.4/32
+    local adjacency
+     local label 24006      labels imposed {ImplNull}
+
+    Load distribution: 0 (refcount 3)
+
+    Hash  OK  Interface                 Address
+    0     Y   srte_c_100_ep_4.4.4.4     point2point
+RP/0/RP0/CPU0:R1#traceroute 4.4.4.4 source 1.1.1.1
+Sun Jun 21 21:55:43.330 UTC
+
+Type escape sequence to abort.
+Tracing the route to 4.4.4.4
+
+ 1  10.12.0.2 [MPLS: Labels 16003/16004 Exp 0] 11 msec  10 msec  8 msec
+ 2  10.23.0.2 [MPLS: Label 16004 Exp 0] 11 msec  10 msec  10 msec
+ 3  10.34.0.2 12 msec  *  8 msec
+RP/0/RP0/CPU0:R1#
