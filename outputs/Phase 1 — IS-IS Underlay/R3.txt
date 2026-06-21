@@ -1,0 +1,24 @@
+RP/0/RP0/CPU0:R3#show isis neighbors
+Sun Jun 21 21:48:13.523 UTC
+
+IS-IS CORE neighbors:
+System Id      Interface        SNPA           State Holdtime Type IETF-NSF
+R1             Gi0/0/0/2        *PtoP*         Up    28       L2   Capable
+R2             Gi0/0/0/0        *PtoP*         Up    27       L2   Capable
+R4             Gi0/0/0/4        *PtoP*         Up    24       L2   Capable
+
+Total neighbor count: 3
+RP/0/RP0/CPU0:R3#show route isis
+Sun Jun 21 21:48:14.079 UTC
+
+i L2 1.1.1.1/32 [115/20] via 10.23.0.1, 02:11:56, GigabitEthernet0/0/0/0 (!)
+                [115/10] via 10.13.0.1, 02:11:56, GigabitEthernet0/0/0/2
+i L2 2.2.2.2/32 [115/10] via 10.23.0.1, 02:11:56, GigabitEthernet0/0/0/0
+                [115/20] via 10.34.0.2, 02:11:56, GigabitEthernet0/0/0/4 (!)
+i L2 4.4.4.4/32 [115/20] via 10.23.0.1, 02:11:56, GigabitEthernet0/0/0/0 (!)
+                [115/10] via 10.34.0.2, 02:11:56, GigabitEthernet0/0/0/4
+i L2 10.12.0.0/30 [115/20] via 10.23.0.1, 02:11:56, GigabitEthernet0/0/0/0
+                  [115/20] via 10.13.0.1, 02:11:56, GigabitEthernet0/0/0/2
+i L2 10.24.0.0/30 [115/20] via 10.23.0.1, 02:11:56, GigabitEthernet0/0/0/0
+                  [115/20] via 10.34.0.2, 02:11:56, GigabitEthernet0/0/0/4
+RP/0/RP0/CPU0:R3#
