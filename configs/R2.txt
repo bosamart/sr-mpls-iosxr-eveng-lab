@@ -1,0 +1,56 @@
+! ====================================================================
+! R2 - P  (Provider core)
+! IS-IS L2 + SR-MPLS + TI-LFA
+! Loopback0 2.2.2.2/32  |  prefix-SID index 2 (label 16002)
+! Links: Gi0/0/0/0->R1, Gi0/0/0/1->R3 (cross-link), Gi0/0/0/3->R4
+! ====================================================================
+hostname R2
+!
+interface Loopback0
+ ipv4 address 2.2.2.2 255.255.255.255
+!
+interface GigabitEthernet0/0/0/0
+ ipv4 address 10.12.0.2 255.255.255.252
+!
+interface GigabitEthernet0/0/0/1
+ ipv4 address 10.23.0.1 255.255.255.252
+!
+interface GigabitEthernet0/0/0/3
+ ipv4 address 10.24.0.1 255.255.255.252
+!
+router isis CORE
+ is-type level-2-only
+ net 49.0001.0000.0000.0002.00
+ address-family ipv4 unicast
+  metric-style wide
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid index 2
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  point-to-point
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+!
+end
