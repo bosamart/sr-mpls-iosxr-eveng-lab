@@ -73,13 +73,19 @@ interesting to do.
 | R3 | P  | 3.3.3.3/32 | 3 | 16003 |
 | R4 | PE | 4.4.4.4/32 | 4 | 16004 |
 
-| Link | Subnet | A-end | B-end |
+| Link | Subnet | A-end (intf, IP) | B-end (intf, IP) |
 |---|---|---|---|
-| R1–R2 | 10.12.0.0/30 | R1 .1 | R2 .2 |
-| R1–R3 | 10.13.0.0/30 | R1 .1 | R3 .2 |
-| R2–R4 | 10.24.0.0/30 | R2 .1 | R4 .2 |
-| R3–R4 | 10.34.0.0/30 | R3 .1 | R4 .2 |
-| R2–R3 | 10.23.0.0/30 | R2 .1 | R3 .2 |
+| R1–R2 | 10.12.0.0/30 | R1 Gi0/0/0/1 .1 | R2 Gi0/0/0/0 .2 |
+| R1–R3 | 10.13.0.0/30 | R1 Gi0/0/0/3 .1 | R3 Gi0/0/0/2 .2 |
+| R2–R3 (cross-link) | 10.23.0.0/30 | R2 Gi0/0/0/1 .1 | R3 Gi0/0/0/0 .2 |
+| R2–R4 | 10.24.0.0/30 | R2 Gi0/0/0/3 .1 | R4 Gi0/0/0/2 .2 |
+| R3–R4 | 10.34.0.0/30 | R3 Gi0/0/0/4 .1 | R4 Gi0/0/0/3 .2 |
+| CE1–R1 (VRF CUST-A) | 192.168.11.0/30 | CE1 Gi0/0/0/1 .2 | R1 Gi0/0/0/0 .1 |
+| CE2–R4 (VRF CUST-A) | 192.168.44.0/30 | CE2 Gi0/0/0/0 .2 | R4 Gi0/0/0/1 .1 |
+
+**Customer (L3VPN) addressing:** VRF `CUST-A`, RD/RT `100:1`. CE1 AS 65001, Lo0 `11.11.11.11`. CE2 AS 65002, Lo0 `22.22.22.22`. Provider AS 100.
+
+Full device configs are in [`configs/`](configs/).
 
 ---
 
@@ -309,4 +315,4 @@ _Add your own outputs and EVE-NG screenshots here as you complete each phase:_
 
 ---
 
-*Lab built and documented by BO SAM ATH. Feedback welcome via issues/PRs.*
+*Lab built and documented by [your name]. Feedback welcome via issues/PRs.*
