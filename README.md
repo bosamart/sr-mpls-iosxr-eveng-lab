@@ -315,4 +315,4 @@ _Add your own outputs and EVE-NG screenshots here as you complete each phase:_
 
 ---
 
-*Lab built and documented by [your name]. Feedback welcome via issues/PRs.*
+*Lab built and documented by BO SAM ATH. Feedback welcome via issues/PRs.*
