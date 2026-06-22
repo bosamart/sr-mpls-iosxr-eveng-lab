@@ -1,8 +1,10 @@
 ! ====================================================================
-! R1 - PE  (Provider Edge)  -- FINAL (Phases 1-6)
+! R1 - PE  (Provider Edge)  -- FINAL (Phases 1-7)
 ! Phase 1-5 : IS-IS L2 + SR-MPLS + TI-LFA + SR-TE + L3VPN (MPLS)
 ! Phase 6   : SRv6 transport + L3VPN over SRv6 (uDT4)
+! Phase 7   : EVPN-VPWS (L2VPN) over SRv6 (uDX2) on Gi0/0/0/2
 ! IPv4 Lo0 1.1.1.1/32 (prefix-SID 16001) | SRv6 locator fcbb:bb00:1::/48
+! NOTE: new XR interfaces may come up admin-down -- 'no shutdown' when pasting.
 ! ====================================================================
 hostname R1
 !
@@ -51,6 +53,11 @@ segment-routing
   !
  !
 !
+evpn
+ segment-routing srv6
+  locator MAIN
+ !
+!
 interface Loopback0
  ipv4 address 1.1.1.1 255.255.255.255
  ipv6 address fcbb:bb00:1::1/128
@@ -62,6 +69,9 @@ interface GigabitEthernet0/0/0/0
 interface GigabitEthernet0/0/0/1
  ipv4 address 10.12.0.1 255.255.255.252
  ipv6 enable
+!
+interface GigabitEthernet0/0/0/2
+ l2transport
 !
 interface GigabitEthernet0/0/0/3
  ipv4 address 10.13.0.1 255.255.255.252
@@ -111,11 +121,15 @@ router bgp 100
  bgp router-id 1.1.1.1
  address-family vpnv4 unicast
  !
+ address-family l2vpn evpn
+ !
  neighbor 4.4.4.4
   remote-as 100
   update-source Loopback0
   address-family vpnv4 unicast
    encapsulation-type srv6
+  !
+  address-family l2vpn evpn
   !
  !
  vrf CUST-A
@@ -133,6 +147,14 @@ router bgp 100
     route-policy PASS in
     route-policy PASS out
    !
+  !
+ !
+!
+l2vpn
+ xconnect group EVPN-VPWS
+  p2p CE1-CE2-L2
+   interface GigabitEthernet0/0/0/2
+   neighbor evpn evi 200 service 1 segment-routing srv6
   !
  !
 !
