@@ -1,7 +1,7 @@
 ! ====================================================================
 ! CE1 - Customer Edge  (AS 65001)
-! eBGP to R1 (PE).  Loopback 11.11.11.11/32 advertised into the VPN.
-! Link Gi0/0/0/1 -> R1 Gi0/0/0/0
+! L3VPN: eBGP to R1 on Gi0/0/0/1; Loopback 11.11.11.11/32
+! L2VPN: Gi0/0/0/2 in shared subnet 172.16.0.0/24 (EVPN-VPWS to CE2)
 ! ====================================================================
 hostname CE1
 !
@@ -14,6 +14,9 @@ interface Loopback0
 !
 interface GigabitEthernet0/0/0/1
  ipv4 address 192.168.11.2 255.255.255.252
+!
+interface GigabitEthernet0/0/0/2
+ ipv4 address 172.16.0.1 255.255.255.0
 !
 router bgp 65001
  bgp router-id 11.11.11.11

@@ -1,7 +1,7 @@
 ! ====================================================================
 ! CE2 - Customer Edge  (AS 65002)
-! eBGP to R4 (PE).  Loopback 22.22.22.22/32 advertised into the VPN.
-! Link Gi0/0/0/0 -> R4 Gi0/0/0/1
+! L3VPN: eBGP to R4 on Gi0/0/0/0; Loopback 22.22.22.22/32
+! L2VPN: Gi0/0/0/1 in shared subnet 172.16.0.0/24 (EVPN-VPWS to CE1)
 ! ====================================================================
 hostname CE2
 !
@@ -14,6 +14,9 @@ interface Loopback0
 !
 interface GigabitEthernet0/0/0/0
  ipv4 address 192.168.44.2 255.255.255.252
+!
+interface GigabitEthernet0/0/0/1
+ ipv4 address 172.16.0.2 255.255.255.0
 !
 router bgp 65002
  bgp router-id 22.22.22.22
