@@ -20,6 +20,7 @@ mobile/transport networks are built.
 - **SR-TE** explicit-path policies and traffic steering
 - L3VPN (MP-BGP VPNv4) over an SR transport
 - **SRv6**: locators, uSID, and an L3VPN over SRv6 (uDT4 / End.DT4)
+- **EVPN-VPWS** (L2VPN / E-Line) over both SR-MPLS and SRv6 (uDX2)
 - Lab build & automation in EVE-NG with Cisco IOS XRv9000
 
 ---
@@ -299,6 +300,64 @@ ping 22.22.22.22 source 11.11.11.11       ! from CE1 — now over SRv6, no MPLS
 
 ---
 
+## Phase 7 — EVPN-VPWS (L2VPN) over SR-MPLS and SRv6
+
+**Objective:** carry a point-to-point Layer 2 service (E-Line) between CE1 and CE2 —
+they sit in the same subnet and behave as if directly cabled, while the routed SR core
+sits invisibly between them. Built on **separate ports** so the L3VPN keeps running;
+the two services coexist on one core.
+
+**Why it matters:** operators sell both L2 (E-Line/E-LAN) and L3 services. EVPN is the
+modern, BGP-signalled way to do L2VPN, and it rides the same SR transport. Showing L2
+and L3 on one core is exactly an operator's reality.
+
+**Mechanism:** EVPN signals the pseudowire via BGP (`l2vpn evpn` address-family,
+Route-Type 1 / Ethernet A-D). Over SR-MPLS the AC frame rides a transport + PW label;
+over SRv6 it's encapsulated to the egress PE's **uDX2** SID ("decapsulate and hand the
+frame to this L2 port") — the L2 sibling of the L3VPN's uDT4.
+
+7a (SR-MPLS) — convert a free CE port to an L2 attachment circuit and build the PW:
+```
+interface GigabitEthernet0/0/0/2
+ l2transport
+!
+router bgp 100
+ address-family l2vpn evpn
+ neighbor 4.4.4.4
+  address-family l2vpn evpn
+!
+l2vpn
+ xconnect group EVPN-VPWS
+  p2p CE1-CE2-L2
+   interface GigabitEthernet0/0/0/2
+   neighbor evpn evi 200 target 4 source 1     ! R4 mirrors: target 1 source 4
+```
+
+7b (SRv6) — add an SRv6 locator under EVPN and switch the PW to the SRv6 service form:
+```
+evpn
+ segment-routing srv6
+  locator MAIN
+!
+l2vpn
+ xconnect group EVPN-VPWS
+  p2p CE1-CE2-L2
+   interface GigabitEthernet0/0/0/2
+   neighbor evpn evi 200 service 1 segment-routing srv6
+```
+
+> New XR interfaces can come up admin-down — remember `no shutdown` on the L2 ACs.
+
+**Verify**
+```
+show l2vpn xconnect [detail]
+show segment-routing srv6 sid     ! a uDX2 SID appears alongside uN and uDT4
+ping 172.16.0.2                   ! from CE1 — same-subnet L2 reachability
+show arp                          ! CE1 learns CE2's MAC = genuinely Layer 2
+```
+
+---
+
 ## Results
 
 - [x] **Phase 1** — IS-IS adjacencies up, loopbacks reachable
@@ -307,6 +366,7 @@ ping 22.22.22.22 source 11.11.11.11       ! from CE1 — now over SRv6, no MPLS
 - [x] **Phase 4** — SR-TE policy steers traffic R1→R2→R3→R4 (against IGP)
 - [x] **Phase 5** — CE1↔CE2 L3VPN ping success across the SR core
 - [x] **Phase 6** — same L3VPN over SRv6 (uDT4 service SID, no MPLS)
+- [x] **Phase 7** — EVPN-VPWS L2VPN over SR-MPLS *and* SRv6 (uDX2), alongside the L3VPN
 
 ### Phase 1 — IS-IS baseline
 
@@ -410,6 +470,32 @@ Success rate is 100 percent (5/5)
 
 **Result:** one VRF, validated over both SR-MPLS and SRv6 data planes — a
 transport-agnostic L3VPN service.
+
+### Phase 7 — EVPN-VPWS (L2VPN) over SR-MPLS and SRv6
+
+A point-to-point L2 service running alongside the L3VPN on the same core. The SID
+table below is the capstone — one SRv6 locator carrying transport (`uN`/`uA`), the
+L3VPN (`uDT4`), and the L2VPN (`uDX2`) at once:
+
+```
+R1# show segment-routing srv6 sid
+fcbb:bb00:1::         uN     transport
+fcbb:bb00:1:e000::    uA     adjacency SID
+fcbb:bb00:1:e002::    uDT4   'CUST-A'    <- L3VPN service SID
+fcbb:bb00:1:e003::    uDX2   200:1       <- L2VPN (VPWS) service SID
+
+R1# show l2vpn xconnect detail
+  XC CE1-CE2-L2 ... Encapsulation SRv6 ... SRv6 Headend H.Encaps.L2.Red
+  uDX2  Local fcbb:bb00:1:e003::   Remote fcbb:bb00:4:e003::
+
+CE1# ping 172.16.0.2            ! same-subnet L2 reachability over SRv6
+Success rate is 100 percent (5/5)
+CE1# show arp                  ! CE2's MAC learned = genuinely Layer 2
+172.16.0.2  ...  5000.0006.0004  Dynamic  GigabitEthernet0/0/0/2
+```
+
+`uDT4` and `uDX2` differ only in the egress instruction — route lookup vs hand-to-port.
+**Result:** L2 and L3 services, each over both SR-MPLS and SRv6, on one four-node core.
 
 ---
 
