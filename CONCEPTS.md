@@ -65,6 +65,15 @@ the global SR transport.
 locator = transport ("reach R4"), function = service ("decap + VRF lookup"). The core
 just routes plain IPv6.
 
+**Phase 7 — EVPN-VPWS (L2VPN).** *Problem:* operators also sell Layer 2 (E-Line)
+services, not just L3. *Mechanism:* the CE port becomes an L2 attachment circuit;
+EVPN (BGP `l2vpn evpn` AF, Route-Type 1) signals a point-to-point pseudowire across
+the same SR core. Over SRv6 the egress uses a `uDX2` SID. *Insight:* `uDX2` is the L2
+sibling of `uDT4` — same encapsulation machinery, but the egress instruction is
+"decap and hand the frame to this port" instead of "decap and route." CE1 and CE2 sit
+in one subnet and learn each other's MAC, proving it's genuinely Layer 2 across a
+routed core. L2 and L3 services run side by side on one core.
+
 ---
 
 ## The synthesis
@@ -100,6 +109,10 @@ The core's job never changes: read the top segment, act, move on.
 | **Locator (SRv6)** | IPv6 prefix per node; SIDs are allocated from it |
 | **Function (SRv6)** | The instruction encoded in a SID (End, End.X, End.DT4 …) |
 | **uN / uA / uDT4** | uSID forms of node-SID / adjacency-SID / "decap + IPv4 VRF lookup" |
+| **EVPN** | BGP control plane for L2 (and L3) VPNs; carries MAC/Ethernet routes |
+| **VPWS (E-Line)** | Point-to-point L2 pseudowire — two ports act as one wire |
+| **uDX2 (End.DX2)** | SRv6 L2VPN service SID: "decap + hand the frame to this L2 port" |
+| **AC (attachment circuit)** | The CE-facing L2 port (`l2transport`) bound to a pseudowire |
 | **uSID** | Micro-SID — compression packing several SIDs into one IPv6 address |
 | **H.Encaps.Red** | SRv6 headend encapsulation (ingress wraps the packet in IPv6 + SID) |
 
@@ -149,3 +162,15 @@ right VRF.
 The service (VRF, RD/RT, PE-CE peering, customer addressing) is independent of the
 transport. Only the underlay encapsulation changed. CE1↔CE2 reachability is identical
 either way — the L3VPN is transport-agnostic.
+
+**What's the difference between the L3VPN and L2VPN service SIDs in SRv6?**
+`uDT4` (L3VPN) means "decapsulate, then do an IPv4 route lookup in the VRF." `uDX2`
+(EVPN-VPWS / L2VPN) means "decapsulate, then hand the Ethernet frame straight to this
+L2 port." Same SRv6 encapsulation machinery; the only difference is the egress
+instruction — route vs deliver-to-port.
+
+**How is EVPN-VPWS signalled, and how do you know the L2 service really works?**
+EVPN signals the pseudowire over BGP using the `l2vpn evpn` address-family
+(Route-Type 1, Ethernet Auto-Discovery). You know it's truly Layer 2 because the two
+CEs are in the same subnet and each learns the *other's MAC address* across the routed
+core — something impossible if the core were routing between them.
