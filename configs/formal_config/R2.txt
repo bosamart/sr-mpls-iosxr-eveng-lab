@@ -1,0 +1,55 @@
+hostname R2
+
+interface Loopback0
+interface Loopback0 ipv4 address 2.2.2.2 255.255.255.255
+interface Loopback0 ipv6 address fcbb:bb00:2::1/128
+interface MgmtEth0/RP0/CPU0/0 shutdown
+interface GigabitEthernet0/0/0/0 ipv4 address 10.12.0.2 255.255.255.252
+interface GigabitEthernet0/0/0/0 ipv6 enable
+interface GigabitEthernet0/0/0/1 ipv4 address 10.23.0.1 255.255.255.252
+interface GigabitEthernet0/0/0/1 ipv6 enable
+interface GigabitEthernet0/0/0/2 shutdown
+interface GigabitEthernet0/0/0/3 ipv4 address 10.24.0.1 255.255.255.252
+interface GigabitEthernet0/0/0/3 ipv6 enable
+interface GigabitEthernet0/0/0/4 shutdown
+router isis CORE
+router isis CORE is-type level-2-only
+router isis CORE net 49.0001.0000.0000.0002.00
+router isis CORE address-family ipv4 unicast
+router isis CORE address-family ipv4 unicast metric-style wide
+router isis CORE address-family ipv4 unicast segment-routing mpls
+router isis CORE address-family ipv6 unicast
+router isis CORE address-family ipv6 unicast metric-style wide
+router isis CORE address-family ipv6 unicast segment-routing srv6
+router isis CORE address-family ipv6 unicast segment-routing srv6 locator MAIN
+router isis CORE interface Loopback0
+router isis CORE interface Loopback0 passive
+router isis CORE interface Loopback0 address-family ipv4 unicast
+router isis CORE interface Loopback0 address-family ipv4 unicast prefix-sid index 2
+router isis CORE interface Loopback0 address-family ipv6 unicast
+router isis CORE interface GigabitEthernet0/0/0/0
+router isis CORE interface GigabitEthernet0/0/0/0 point-to-point
+router isis CORE interface GigabitEthernet0/0/0/0 address-family ipv4 unicast
+router isis CORE interface GigabitEthernet0/0/0/0 address-family ipv4 unicast fast-reroute per-prefix
+router isis CORE interface GigabitEthernet0/0/0/0 address-family ipv4 unicast fast-reroute per-prefix ti-lfa
+router isis CORE interface GigabitEthernet0/0/0/0 address-family ipv6 unicast
+router isis CORE interface GigabitEthernet0/0/0/1
+router isis CORE interface GigabitEthernet0/0/0/1 point-to-point
+router isis CORE interface GigabitEthernet0/0/0/1 address-family ipv4 unicast
+router isis CORE interface GigabitEthernet0/0/0/1 address-family ipv4 unicast fast-reroute per-prefix
+router isis CORE interface GigabitEthernet0/0/0/1 address-family ipv4 unicast fast-reroute per-prefix ti-lfa
+router isis CORE interface GigabitEthernet0/0/0/1 address-family ipv6 unicast
+router isis CORE interface GigabitEthernet0/0/0/3
+router isis CORE interface GigabitEthernet0/0/0/3 point-to-point
+router isis CORE interface GigabitEthernet0/0/0/3 address-family ipv4 unicast
+router isis CORE interface GigabitEthernet0/0/0/3 address-family ipv4 unicast fast-reroute per-prefix
+router isis CORE interface GigabitEthernet0/0/0/3 address-family ipv4 unicast fast-reroute per-prefix ti-lfa
+router isis CORE interface GigabitEthernet0/0/0/3 address-family ipv6 unicast
+segment-routing srv6
+segment-routing srv6 encapsulation source-address fcbb:bb00:2::1
+segment-routing srv6 locators locator MAIN
+segment-routing srv6 locators locator MAIN micro-segment behavior unode psp-usd
+segment-routing srv6 locators locator MAIN prefix fcbb:bb00:2::/48
+segment-routing
+
+
