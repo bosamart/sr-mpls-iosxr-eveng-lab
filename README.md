@@ -30,7 +30,7 @@ mobile/transport networks are built.
 | Component | Detail |
 |---|---|
 | Emulator | EVE-NG (Community/Pro) |
-| Node image | Cisco IOS XRv9000 (`xrv9k-fullk9-7.x`, reduced-resource build) |
+| Node image | Cisco IOS XRv9000 (24.3.1; reduced-resource build) |
 | Core/PE nodes | 4 × XRv9000 (R1–R4), 4 vCPU, 8–16 GB RAM each |
 | CE nodes | 2 × Cisco IOS XRv9000 (CE1, CE2) |
 | IGP | IS-IS Level-2-only |
@@ -39,6 +39,12 @@ mobile/transport networks are built.
 > **Resource note:** XRv9000 is RAM-hungry, and all four core nodes are needed for
 > the diamond (the R2–R3 cross-link is what makes TI-LFA and SR-TE work). If your
 > host is tight, use the reduced-resource ("RR") image and lower per-node RAM.
+
+> **Platform limitation (verified in this lab):** XRv9000 supports SR, L3VPN, and
+> EVPN-VPWS (point-to-point L2), but **not** EVPN-ELAN / VPLS multipoint bridging —
+> a bridge-domain is rejected with "VPLS Bridge domains not supported on this
+> platform." Multipoint L2 needs physical/heavier platforms (ASR 9000, NCS 500/5500,
+> or 8000-series). Point-to-point L2 (VPWS) works fine, which is why Phase 7 succeeded.
 
 ---
 
