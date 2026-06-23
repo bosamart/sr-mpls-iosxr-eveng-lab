@@ -3,6 +3,7 @@
 ! Phase 1-5 : IS-IS L2 + SR-MPLS + TI-LFA + L3VPN (MPLS)
 ! Phase 6   : SRv6 transport + L3VPN over SRv6 (uDT4)
 ! Phase 7   : EVPN-VPWS (L2VPN) over SRv6 (uDX2) on Gi0/0/0/0
+! Extra     : 2nd VRF CUST-B (rd/rt 100:2) for the RD-vs-RT demo
 ! IPv4 Lo0 4.4.4.4/32 (prefix-SID 16004) | SRv6 locator fcbb:bb00:4::/48
 ! NOTE: new XR interfaces may come up admin-down -- 'no shutdown' when pasting.
 ! ====================================================================
@@ -15,6 +16,16 @@ vrf CUST-A
   !
   export route-target
    100:1
+  !
+ !
+!
+vrf CUST-B
+ address-family ipv4 unicast
+  import route-target
+   100:2
+  !
+  export route-target
+   100:2
   !
  !
 !
@@ -43,6 +54,10 @@ evpn
 interface Loopback0
  ipv4 address 4.4.4.4 255.255.255.255
  ipv6 address fcbb:bb00:4::1/128
+!
+interface Loopback100
+ vrf CUST-B
+ ipv4 address 192.168.11.1 255.255.255.252
 !
 interface GigabitEthernet0/0/0/0
  l2transport
@@ -129,6 +144,12 @@ router bgp 100
     route-policy PASS in
     route-policy PASS out
    !
+  !
+ !
+ vrf CUST-B
+  rd 100:2
+  address-family ipv4 unicast
+   redistribute connected
   !
  !
 !
