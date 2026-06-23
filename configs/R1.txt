@@ -5,7 +5,6 @@
 ! Phase 7   : EVPN-VPWS (L2VPN) over SRv6 (uDX2) on Gi0/0/0/2
 ! Extra     : 2nd VRF CUST-B (rd/rt 100:2) for the RD-vs-RT demo
 ! IPv4 Lo0 1.1.1.1/32 (prefix-SID 16001) | SRv6 locator fcbb:bb00:1::/48
-! NOTE: new XR interfaces may come up admin-down -- 'no shutdown' when pasting.
 ! ====================================================================
 hostname R1
 !
@@ -72,10 +71,6 @@ evpn
 interface Loopback0
  ipv4 address 1.1.1.1 255.255.255.255
  ipv6 address fcbb:bb00:1::1/128
-!
-interface Loopback100
- vrf CUST-B
- ipv4 address 192.168.11.1 255.255.255.252
 !
 interface GigabitEthernet0/0/0/0
  vrf CUST-A

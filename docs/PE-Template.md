@@ -1,9 +1,7 @@
 # PE Configuration Template (Cisco IOS XR)
 
-A fill-in-the-blanks PE template covering the dual-stack underlay (SR-MPLS + SRv6), an
-L3VPN, and an EVPN-VPWS L2VPN. **The lesson is in what's a variable and what isn't:**
-every `{{VARIABLE}}` is a per-device or per-service value; everything in plain text is
-**domain-wide and never changes**. That sorting is the understanding.
+Fill-in-the-blanks PE template covering SR-MPLS + SRv6 underlay, L3VPN, and EVPN-VPWS.
+Every `{{VARIABLE}}` is per-device or per-service. Plain text = domain-wide, never changes.
 
 ## Fill-in table
 
@@ -22,9 +20,9 @@ every `{{VARIABLE}}` is a per-device or per-service value; everything in plain t
 | `{{RD}}` / `{{RT}}` | per-service | 100:1 / 100:1 | 100:1 / 100:1 |
 | `{{EVI}}` / `{{SERVICE_ID}}` | per-service | 200 / 1 | 200 / 1 |
 
-Domain-wide constants (same on every node, never variables): IS-IS process `CORE`,
-`is-type level-2-only`, `metric-style wide`, `segment-routing mpls`, SRGB 16000–23999,
-uSID behavior `unode psp-usd`, provider AS `100`.
+Domain-wide constants (never change): IS-IS process `CORE`, `is-type level-2-only`,
+`metric-style wide`, `segment-routing mpls`, SRGB 16000–23999, uSID behavior
+`unode psp-usd`, provider AS `100`.
 
 ---
 
@@ -76,8 +74,6 @@ interface {{L3_CE_INTF}}
 interface {{L2_AC_INTF}}
  l2transport
 !
-! --- core interfaces: ipv4 + ipv6 enable + IS-IS (repeat per core link) ---
-!
 router isis CORE
  is-type level-2-only
  net {{NET}}
@@ -99,8 +95,6 @@ router isis CORE
   address-family ipv6 unicast
   !
  !
- ! per core interface:
- !  point-to-point / address-family ipv4 unicast (+ ti-lfa) / address-family ipv6 unicast
 !
 router bgp 100
  bgp router-id {{V4_LOOPBACK}}
@@ -112,7 +106,7 @@ router bgp 100
   remote-as 100
   update-source Loopback0
   address-family vpnv4 unicast
-   encapsulation-type srv6        ! omit this line to run the L3VPN over SR-MPLS
+   encapsulation-type srv6        ! omit for SR-MPLS transport
   !
   address-family l2vpn evpn
   !
@@ -121,7 +115,7 @@ router bgp 100
   rd {{RD}}
   address-family ipv4 unicast
    redistribute connected
-   segment-routing srv6           ! omit this block to run the L3VPN over SR-MPLS
+   segment-routing srv6           ! omit block for SR-MPLS transport
     locator MAIN
     alloc mode per-vrf
    !
@@ -140,23 +134,9 @@ l2vpn
   p2p CE1-CE2-L2
    interface {{L2_AC_INTF}}
    neighbor evpn evi {{EVI}} service {{SERVICE_ID}} segment-routing srv6
-   ! SR-MPLS form instead: neighbor evpn evi {{EVI}} target <remote-ac> source <local-ac>
+   ! SR-MPLS form: neighbor evpn evi {{EVI}} target <remote-ac> source <local-ac>
   !
  !
 !
 commit
 ```
-
----
-
-## How to read this as a learning tool
-
-1. Everything in **plain text** is domain-wide — it is the same on R1, R4, and any PE
-   you ever add. If you understand *why* it's fixed, you understand the protocol.
-2. Every `{{VARIABLE}}` is something you must decide per device or per service. The
-   fill-in table tells you which.
-3. The two inline comments show the **transport switch**: keep the SRv6 lines for SRv6,
-   delete them for SR-MPLS. That tiny delta is the whole "transport-agnostic" idea.
-
-Re-deriving this template from memory — and being able to say which bucket each value
-falls in — is a strong test that the concepts have stuck.
