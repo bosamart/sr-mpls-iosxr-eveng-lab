@@ -16,6 +16,17 @@
 > Topology diagram: 4-node diamond (R1-PE, R2-P, R3-P, R4-PE) + CE1, CE2
 > See README.md in this lab for full topology
 
+## Per-Phase Verification Logs
+Real `show`-command captures + analysis for each phase:
+
+- [Phase 1 — IS-IS underlay](phase1-isis-verify.md) ✅
+- [Phase 2 — SR-MPLS prefix-SIDs](phase2-srmpls-verify.md) ✅
+- [Phase 3 — TI-LFA fast reroute](phase3-tilfa-verify.md) ✅
+- [Phase 4 — SR-TE explicit path](phase4-srte-verify.md) ✅
+- [Phase 5 — L3VPN over SR-MPLS](phase5-l3vpn-verify.md) ✅
+- [Phase 6 — L3VPN over SRv6 (uDT4)](phase6-srv6-verify.md) ✅
+- [Phase 7 — EVPN-VPWS over SRv6 (uDX2)](phase7-evpn-vpws-verify.md) ✅
+
 ## Key Configs
 > Device configs stored in `../configs/`
 
