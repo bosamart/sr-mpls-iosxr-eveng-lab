@@ -71,6 +71,11 @@ Each phase adds one thing. If something breaks, you only need to look at what yo
 
 ## Topology — draw this in EVE-NG
 
+![SR-MPLS + SRv6 lab diamond topology](diagrams/topology.svg)
+
+<details>
+<summary>Same topology as ASCII (copy-paste friendly)</summary>
+
 ```
                 +--------+
      +----------+   R2   +----------+
@@ -90,6 +95,8 @@ Each phase adds one thing. If something breaks, you only need to look at what yo
 |   CE1   |                   |   CE2   |
 +---------+                   +---------+
 ```
+
+</details>
 
 **Roles:**
 - **PE** (Provider Edge) = R1 and R4. These connect to customers (CE1, CE2).
@@ -685,6 +692,8 @@ If all pings work, you have built a full service-provider network from scratch:
 ```
 sr-mpls-iosxr-eveng-lab/
 ├── README.md            ← start here (lab guide)
+├── diagrams/
+│   └── topology.svg     ← the diamond topology (rendered at top of README)
 ├── configs/
 │   ├── R1.txt           ← full cumulative config (all 7 phases)
 │   ├── R2.txt

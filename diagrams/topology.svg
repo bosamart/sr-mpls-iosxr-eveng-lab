@@ -1,0 +1,114 @@
+<svg width="100%" viewBox="0 0 960 600" role="img" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <title>SR-MPLS + SRv6 lab diamond topology</title>
+  <desc>Six nodes: PEs R1 and R4, core P routers R2 and R3 in a diamond with an R2-R3 cross-link, and customer routers CE1 and CE2 attached to the PEs. Core links carry IS-IS, SR-MPLS and SRv6; customer links carry the L3VPN and EVPN-VPWS services.</desc>
+
+  <style>
+    .panel { fill:#F5F6F8; stroke:#E4E6EA; }
+    .pe   { fill:#1D5FA5; stroke:#0C447C; }
+    .p    { fill:#3F8FDD; stroke:#185FA5; }
+    .ce   { fill:#1E9E76; stroke:#0F6E56; }
+    .nname { fill:#FFFFFF; font-weight:700; }
+    .nsub  { fill:#E6EEF7; }
+    .nsubc { fill:#E3F4EC; }
+    .core  { stroke:#5AA6E6; stroke-width:3; fill:none; }
+    .cross { stroke:#5AA6E6; stroke-width:3; stroke-dasharray:7 5; fill:none; }
+    .cust  { stroke:#28A883; stroke-width:3; fill:none; }
+    .lbl   { fill:#44443F; }
+    .lblm  { fill:#7A7A72; }
+    .lbox  { fill:#FFFFFF; stroke:#E2E2DD; }
+    .head  { fill:#2B2B29; font-weight:700; }
+    .leg   { fill:#44443F; }
+  </style>
+
+  <rect x="6" y="6" width="948" height="588" rx="16" class="panel"/>
+  <text x="480" y="36" text-anchor="middle" font-size="17" class="head">SR-MPLS + SRv6 Lab — Diamond Topology</text>
+  <text x="480" y="55" text-anchor="middle" font-size="11.5" class="lblm">Cisco IOS XRv9000 · EVE-NG · IS-IS L2 area 49.0001 · SRGB 16000–23999</text>
+
+  <!-- ===== LINKS (drawn first, under boxes) ===== -->
+  <!-- core -->
+  <line class="core"  x1="343" y1="250" x2="470" y2="130"/>
+  <line class="core"  x1="343" y1="312" x2="470" y2="452"/>
+  <line class="cross" x1="495" y1="134" x2="495" y2="440"/>
+  <line class="core"  x1="560" y1="134" x2="658" y2="254"/>
+  <line class="core"  x1="560" y1="450" x2="658" y2="308"/>
+  <!-- customer -->
+  <line class="cust" x1="145" y1="281" x2="205" y2="281"/>
+  <line class="cust" x1="785" y1="281" x2="815" y2="281"/>
+
+  <!-- ===== LINK LABELS ===== -->
+  <!-- R1-R2 -->
+  <g><rect x="356" y="158" width="104" height="32" rx="5" class="lbox"/>
+    <text x="408" y="172" text-anchor="middle" font-size="11" class="lbl">10.12.0.0/30</text>
+    <text x="408" y="184" text-anchor="middle" font-size="9" class="lblm">R1 Gi1 — R2 Gi0</text></g>
+  <!-- R1-R3 -->
+  <g><rect x="356" y="392" width="104" height="32" rx="5" class="lbox"/>
+    <text x="408" y="406" text-anchor="middle" font-size="11" class="lbl">10.13.0.0/30</text>
+    <text x="408" y="418" text-anchor="middle" font-size="9" class="lblm">R1 Gi3 — R3 Gi2</text></g>
+  <!-- R2-R3 cross -->
+  <g><rect x="512" y="271" width="110" height="32" rx="5" class="lbox"/>
+    <text x="567" y="285" text-anchor="middle" font-size="11" class="lbl">10.23.0.0/30</text>
+    <text x="567" y="297" text-anchor="middle" font-size="9" class="lblm">cross-link (Gi1—Gi0)</text></g>
+  <!-- R2-R4 -->
+  <g><rect x="566" y="158" width="104" height="32" rx="5" class="lbox"/>
+    <text x="618" y="172" text-anchor="middle" font-size="11" class="lbl">10.24.0.0/30</text>
+    <text x="618" y="184" text-anchor="middle" font-size="9" class="lblm">R2 Gi3 — R4 Gi2</text></g>
+  <!-- R3-R4 -->
+  <g><rect x="566" y="392" width="104" height="32" rx="5" class="lbox"/>
+    <text x="618" y="406" text-anchor="middle" font-size="11" class="lbl">10.34.0.0/30</text>
+    <text x="618" y="418" text-anchor="middle" font-size="9" class="lblm">R3 Gi4 — R4 Gi3</text></g>
+  <!-- CE1-R1 -->
+  <g><rect x="118" y="222" width="118" height="32" rx="5" class="lbox"/>
+    <text x="177" y="236" text-anchor="middle" font-size="10.5" class="lbl">192.168.11.0/30</text>
+    <text x="177" y="248" text-anchor="middle" font-size="8.5" class="lblm">L3VPN + EVPN-VPWS</text></g>
+  <!-- R4-CE2 -->
+  <g><rect x="741" y="222" width="118" height="32" rx="5" class="lbox"/>
+    <text x="800" y="236" text-anchor="middle" font-size="10.5" class="lbl">192.168.44.0/30</text>
+    <text x="800" y="248" text-anchor="middle" font-size="8.5" class="lblm">L3VPN + EVPN-VPWS</text></g>
+
+  <!-- ===== NODES ===== -->
+  <!-- CE1 -->
+  <g><rect x="35" y="253" width="110" height="56" rx="9" class="ce"/>
+    <text x="90" y="276" text-anchor="middle" font-size="16" class="nname">CE1</text>
+    <text x="90" y="291" text-anchor="middle" font-size="9.5" class="nsubc">AS 65001</text>
+    <text x="90" y="303" text-anchor="middle" font-size="9.5" class="nsubc">Lo0 11.11.11.11</text></g>
+  <!-- R1 -->
+  <g><rect x="205" y="247" width="140" height="68" rx="10" class="pe"/>
+    <text x="275" y="272" text-anchor="middle" font-size="18" class="nname">R1</text>
+    <text x="275" y="289" text-anchor="middle" font-size="10" class="nsub">PE · Lo0 1.1.1.1</text>
+    <text x="275" y="303" text-anchor="middle" font-size="9.5" class="nsub">SID 16001 · fcbb:bb00:1::/48</text></g>
+  <!-- R2 -->
+  <g><rect x="425" y="66" width="140" height="68" rx="10" class="p"/>
+    <text x="495" y="91" text-anchor="middle" font-size="18" class="nname">R2</text>
+    <text x="495" y="108" text-anchor="middle" font-size="10" class="nsub">P (core) · Lo0 2.2.2.2</text>
+    <text x="495" y="122" text-anchor="middle" font-size="9.5" class="nsub">SID 16002 · fcbb:bb00:2::/48</text></g>
+  <!-- R3 -->
+  <g><rect x="425" y="440" width="140" height="68" rx="10" class="p"/>
+    <text x="495" y="465" text-anchor="middle" font-size="18" class="nname">R3</text>
+    <text x="495" y="482" text-anchor="middle" font-size="10" class="nsub">P (core) · Lo0 3.3.3.3</text>
+    <text x="495" y="496" text-anchor="middle" font-size="9.5" class="nsub">SID 16003 · fcbb:bb00:3::/48</text></g>
+  <!-- R4 -->
+  <g><rect x="645" y="247" width="140" height="68" rx="10" class="pe"/>
+    <text x="715" y="272" text-anchor="middle" font-size="18" class="nname">R4</text>
+    <text x="715" y="289" text-anchor="middle" font-size="10" class="nsub">PE · Lo0 4.4.4.4</text>
+    <text x="715" y="303" text-anchor="middle" font-size="9.5" class="nsub">SID 16004 · fcbb:bb00:4::/48</text></g>
+  <!-- CE2 -->
+  <g><rect x="815" y="253" width="110" height="56" rx="9" class="ce"/>
+    <text x="870" y="276" text-anchor="middle" font-size="16" class="nname">CE2</text>
+    <text x="870" y="291" text-anchor="middle" font-size="9.5" class="nsubc">AS 65002</text>
+    <text x="870" y="303" text-anchor="middle" font-size="9.5" class="nsubc">Lo0 22.22.22.22</text></g>
+
+  <!-- ===== LEGEND ===== -->
+  <rect x="40" y="528" width="16" height="16" rx="3" class="pe"/>
+  <text x="63" y="540" font-size="11" class="leg">PE — provider edge (holds VRFs / services)</text>
+  <rect x="330" y="528" width="16" height="16" rx="3" class="p"/>
+  <text x="353" y="540" font-size="11" class="leg">P — provider core (transport only)</text>
+  <rect x="610" y="528" width="16" height="16" rx="3" class="ce"/>
+  <text x="633" y="540" font-size="11" class="leg">CE — customer edge</text>
+
+  <line class="core"  x1="40" y1="566" x2="74" y2="566"/>
+  <text x="82" y="570" font-size="11" class="leg">core link (IS-IS · SR-MPLS · SRv6)</text>
+  <line class="cross" x1="330" y1="566" x2="364" y2="566"/>
+  <text x="372" y="570" font-size="11" class="leg">R2–R3 cross-link (enables TI-LFA / SR-TE)</text>
+  <line class="cust"  x1="700" y1="566" x2="734" y2="566"/>
+  <text x="742" y="570" font-size="11" class="leg">customer link (VPN)</text>
+</svg>
