@@ -655,7 +655,9 @@ If all pings work, you have built a full service-provider network from scratch:
 
 **Now go back and read the theory:**
 - [`docs/CONCEPTS.md`](docs/CONCEPTS.md) — why each phase works the way it does
+- [`docs/CONFIG-GUIDE.md`](docs/CONFIG-GUIDE.md) — the **real device configs explained top to bottom**, every block annotated (PE, P, CE)
 - [`docs/PARAMETERS.md`](docs/PARAMETERS.md) — what each config knob does and what breaks if it's wrong
+- [`docs/PE-Template.md`](docs/PE-Template.md) — a blank fill-in-the-`{{VARIABLES}}` PE template
 - [`docs/SR-MPLS-vs-SRv6.md`](docs/SR-MPLS-vs-SRv6.md) — deep comparison of the two data planes
 
 **Verification logs — real `show` output from this lab, phase by phase:**
@@ -692,6 +694,7 @@ sr-mpls-iosxr-eveng-lab/
 │   └── CE2.txt
 ├── docs/
 │   ├── CONCEPTS.md      ← read after the lab — theory explained
+│   ├── CONFIG-GUIDE.md  ← the real configs explained top to bottom (PE/P/CE)
 │   ├── PARAMETERS.md    ← every knob and what breaks if wrong
 │   ├── SR-MPLS-vs-SRv6.md
 │   ├── PE-Template.md
