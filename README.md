@@ -670,6 +670,11 @@ If all pings work, you have built a full service-provider network from scratch:
 **Verification logs — real `show` output from this lab, phase by phase:**
 [Phase 1](notes/phase1-isis-verify.md) · [Phase 2](notes/phase2-srmpls-verify.md) · [Phase 3](notes/phase3-tilfa-verify.md) · [Phase 4](notes/phase4-srte-verify.md) · [Phase 5](notes/phase5-l3vpn-verify.md) · [Phase 6](notes/phase6-srv6-verify.md) · [Phase 7](notes/phase7-evpn-vpws-verify.md)
 
+**Want to go further? → [`docs/PHASE8-SR-PCE-ODN.md`](docs/PHASE8-SR-PCE-ODN.md)** — an optional
+extension that replaces the hand-built Phase 4 policy with **controller-driven SR-TE**: an
+SR-PCE node, BGP-LS topology feed, and color-based **ODN** (On-Demand Next-hop) automation —
+the model behind 5G transport / network slicing. *(Design ready; build & verify in EVE-NG.)*
+
 ---
 
 ## Troubleshooting Quick Reference
@@ -704,6 +709,7 @@ sr-mpls-iosxr-eveng-lab/
 ├── docs/
 │   ├── CONCEPTS.md      ← read after the lab — theory explained
 │   ├── CONFIG-GUIDE.md  ← the real configs explained top to bottom (PE/P/CE)
+│   ├── PHASE8-SR-PCE-ODN.md ← optional extension: controller-driven SR-TE (SR-PCE + ODN)
 │   ├── PARAMETERS.md    ← every knob and what breaks if wrong
 │   ├── SR-MPLS-vs-SRv6.md
 │   ├── PE-Template.md
