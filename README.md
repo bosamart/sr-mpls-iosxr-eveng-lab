@@ -62,6 +62,10 @@ Each phase adds one thing. If something breaks, you only need to look at what yo
 - Cisco IOS XRv9000 image loaded into EVE-NG (tested on 24.3.1)
 - 6 nodes in your topology: R1, R2, R3, R4, CE1, CE2
 
+> **Tight on RAM?** XRv9000 is memory-hungry. See [`docs/EVE-NG-RESOURCES.md`](docs/EVE-NG-RESOURCES.md)
+> for per-node sizing, KSM, and a light **CSR 1000v** CE pair (CE3/CE4) you can run instead of
+> CE1/CE2 to save ~8 GB.
+
 **Good to know (but not required yet):**
 - Basic IOS XR CLI — how to enter config mode, `commit`, `show` commands
 - What IS-IS is (a routing protocol, like OSPF)
@@ -704,12 +708,15 @@ sr-mpls-iosxr-eveng-lab/
 │   ├── R2.txt
 │   ├── R3.txt
 │   ├── R4.txt
-│   ├── CE1.txt
-│   └── CE2.txt
+│   ├── CE1.txt          ← XRv9000 CE (canonical)
+│   ├── CE2.txt
+│   ├── CE3-csr.txt      ← CSR 1000v light drop-in for CE1 (saves RAM)
+│   └── CE4-csr.txt      ← CSR 1000v light drop-in for CE2
 ├── docs/
 │   ├── CONCEPTS.md      ← read after the lab — theory explained
 │   ├── CONFIG-GUIDE.md  ← the real configs explained top to bottom (PE/P/CE)
 │   ├── PHASE8-SR-PCE-ODN.md ← optional extension: controller-driven SR-TE (SR-PCE + ODN)
+│   ├── EVE-NG-RESOURCES.md  ← RAM sizing, KSM, the CE-pair power strategy
 │   ├── PARAMETERS.md    ← every knob and what breaks if wrong
 │   ├── SR-MPLS-vs-SRv6.md
 │   ├── PE-Template.md
