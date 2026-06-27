@@ -1,32 +1,28 @@
 ! ====================================================================
-! CE4 - Customer Edge  (Cisco CSR 1000v / IOS-XE)  -- AS 65002
-! LIGHT drop-in replacement for CE2 (XRv9000) to save lab RAM (~4 GB vs 8 GB).
-! Same addressing as CE2 — the PEs are UNCHANGED and never know the difference.
-! >>> Run CE3/CE4 OR CE1/CE2, never both at once (shared PE ports + RAM). <<<
-! L3VPN : eBGP to R4 (192.168.44.1) on Gi1 ; Loopback 22.22.22.22/32
-! L2VPN : Gi2 in shared subnet 172.16.0.0/24 (EVPN-VPWS to CE3)
-! Cabling: CSR Gi1 -> R4 Gi0/0/0/1   |   CSR Gi2 -> R4 Gi0/0/0/0
-! Notes  : IOS-XE has NO 'route-policy PASS' requirement (that's XR-only).
+! CE4 - Customer Edge  (Cisco CSR 1000v / IOS-XE)  -- AS 65004
+! ADDITIONAL L3VPN site in VRF CUST-A, on its OWN PE port + IPs.
+! Light (~4 GB) and always-available — does NOT touch CE1/CE2 or the
+! existing topology. Ideal Phase 8 trigger: it always advertises 44.44.44.44,
+! R4 colors it, and that drives ODN on R1.
+! L3VPN : eBGP to R4 (192.168.40.1) on Gi1 ; Loopback 44.44.44.44/32
+! Reaches CE3 (33.33.33.33) and CE1/CE2 across the SR core (same VRF).
+! Cabling: CSR Gi1 -> R4 Gi0/0/0/4   (new port — set R4 to 5 interfaces in EVE-NG)
+! L2VPN : none — EVPN-VPWS stays CE1<->CE2 (CSR CEs are L3-only here).
 ! ====================================================================
 hostname CE4
 !
 interface Loopback0
- ip address 22.22.22.22 255.255.255.255
+ ip address 44.44.44.44 255.255.255.255
 !
 interface GigabitEthernet1
- description L3VPN link to R4 (R4 Gi0/0/0/1)
- ip address 192.168.44.2 255.255.255.252
+ description L3VPN link to R4 (R4 Gi0/0/0/4)
+ ip address 192.168.40.2 255.255.255.252
  no shutdown
 !
-interface GigabitEthernet2
- description L2VPN (EVPN-VPWS) segment to CE3
- ip address 172.16.0.2 255.255.255.0
- no shutdown
-!
-router bgp 65002
- bgp router-id 22.22.22.22
+router bgp 65004
+ bgp router-id 44.44.44.44
  bgp log-neighbor-changes
- network 22.22.22.22 mask 255.255.255.255
- neighbor 192.168.44.1 remote-as 100
+ network 44.44.44.44 mask 255.255.255.255
+ neighbor 192.168.40.1 remote-as 100
 !
 end

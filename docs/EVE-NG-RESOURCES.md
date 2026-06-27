@@ -22,37 +22,49 @@ RAM you cannot.
 | R1, R4 | PE | XRv9000 | 8 GB | 2 |
 | R2, R3 | P (core) | XRv9000 | 8 GB | 2 |
 | PCE | SR-PCE (Phase 8) | XRv9000 | 8 GB | 2 |
-| CE1, CE2 | customer | XRv9000 | 8 GB | 2 |
-| CE3, CE4 | customer (light) | **CSR 1000v / IOS-XE** | **4 GB** | 1 |
+| CE1, CE2 | customer (L2+L3) | XRv9000 | 8 GB | 2 |
+| CE3, CE4 | customer (L3 only, light) | **CSR 1000v / IOS-XE** | **4 GB** | 1 |
 
-**Two CE pairs, run one at a time** (see below). Set RAM/vCPU per node in EVE-NG:
-*Edit node → RAM / CPU*, then reboot the node.
+Set RAM/vCPU per node in EVE-NG: *Edit node → RAM / CPU*, then reboot the node. The two
+PEs also need their interface count raised to **5** (to expose `Gi0/0/0/4`) — *Edit node →
+Ethernets = 5*, done once while the node is stopped.
 
-## The CE-pair power strategy (the key trick)
+## Two CE sets, both cabled, power only what you need
 
-The PEs only have ports for **one** CE pair, and running all four CEs would blow the RAM
-budget. So the lab defines two interchangeable customer pairs:
+CE3/CE4 are **not** replacements — they're **additional L3VPN sites on their own PE ports
+and IPs**, so nothing is ever re-cabled. You leave everything wired and just power on the
+CEs a given test needs (cabling costs no RAM; only powered-on nodes do).
 
-- **CE1 / CE2 — XRv9000 (8 GB each).** The canonical configs in the repo
-  (`configs/CE1.txt`, `CE2.txt`). Power these on when you want the exact XR CE behavior.
-- **CE3 / CE4 — CSR 1000v (4 GB each).** Light drop-in replacements
-  (`configs/CE3-csr.txt`, `CE4-csr.txt`) with **identical addressing**, cabled to the
-  **same PE ports**. The PEs are unchanged and never know the difference.
+| CE set | Image | RAM | Services | Use it for |
+|---|---|---|---|---|
+| **CE1 / CE2** | XRv9000 | 8 GB ea | L3VPN **+ EVPN-VPWS (L2)** | Phase 7 (L2VPN), XR-specific behavior |
+| **CE3 / CE4** | CSR 1000v | 4 GB ea | L3VPN only | Phases 5–6 (L3VPN) and **Phase 8 (ODN)** |
 
-> **Rule: run CE3/CE4 _or_ CE1/CE2 — never both.** They share the same PE ports
-> (R1 Gi0/0/0/0 + Gi0/0/0/2, R4 Gi0/0/0/1 + Gi0/0/0/0) and the same IPs, so only one
-> pair can be cabled/powered at a time. In EVE-NG, keep the off pair simply **not started**.
+New wiring for CE3/CE4 (everything else unchanged):
 
-**Running budgets:**
+| Link | PE port (new) | CSR port | Subnet | CE Lo0 / AS / VRF |
+|---|---|---|---|---|
+| R1–CE3 | R1 `Gi0/0/0/4` (.1) | CE3 `Gi1` (.2) | 192.168.30.0/30 | 33.33.33.33 · AS 65003 · CUST-A |
+| R4–CE4 | R4 `Gi0/0/0/4` (.1) | CE4 `Gi1` (.2) | 192.168.40.0/30 | 44.44.44.44 · AS 65004 · CUST-A |
+
+> Because CE3/CE4 are in **CUST-A**, they reach CE1/CE2 and each other over the SR core.
+> For **Phase 8**, CE4 always advertises `44.44.44.44`; R4 colors it → reliably triggers
+> ODN on R1 (no flapping XR CE needed). **Phase 7 (EVPN-VPWS) still needs CE1/CE2** — the
+> CSR CEs are L3-only.
+
+**Running budgets (power on only what the test needs):**
 
 | Active set | Sum | Fits 56 GB VM? |
 |---|---|---|
-| 5 core + CE3/CE4 (CSR) | 40 + 8 = **48 GB** | ✅ comfortable |
-| 5 core + CE1/CE2 (XR) | 40 + 16 = **56 GB** | ⚠️ tight — use KSM, or skip the PCE when not on Phase 8 |
-| all 9 nodes at once | **64 GB** | ❌ over budget — don't |
+| 4 core + CE3/CE4 (L3 lab, no PCE) | 32 + 8 = **40 GB** | ✅ roomy |
+| 4 core + PCE + CE3/CE4 (**Phase 8**) | 40 + 8 = **48 GB** | ✅ comfortable |
+| 4 core + CE1/CE2 (**Phase 7 L2VPN**, no PCE) | 32 + 16 = **48 GB** | ✅ comfortable |
+| 4 core + PCE + CE1/CE2 | 40 + 16 = **56 GB** | ⚠️ tight — use KSM |
+| everything powered at once | 64+ GB | ❌ over budget — don't |
 
-> Tip: the **PCE** (8 GB) is only needed for **Phase 8**. For Phases 1–7 leave it off and
-> you reclaim 8 GB — which makes the XR CE pair (CE1/CE2) fit easily.
+> Tip: the **PCE** (8 GB) is only needed for **Phase 8**; leave it off otherwise.
+> The **XR CEs** (CE1/CE2) are only needed for **Phase 7**; for everything else run the
+> light CSR pair. You almost never need PCE *and* the XR CEs at the same time.
 
 ## Enable KSM (free RAM back)
 

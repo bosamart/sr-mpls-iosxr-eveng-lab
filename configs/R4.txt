@@ -68,6 +68,11 @@ interface GigabitEthernet0/0/0/3
  ipv4 address 10.34.0.2 255.255.255.252
  ipv6 enable
 !
+! Phase 8 (extension): additional CSR customer site CE4 in CUST-A
+interface GigabitEthernet0/0/0/4
+ vrf CUST-A
+ ipv4 address 192.168.40.1 255.255.255.252
+!
 router isis CORE
  is-type level-2-only
  net 49.0001.0000.0000.0004.00
@@ -134,6 +139,14 @@ router bgp 100
   !
   neighbor 192.168.44.2
    remote-as 65002
+   address-family ipv4 unicast
+    route-policy PASS in
+    route-policy PASS out
+   !
+  !
+  ! Phase 8 (extension): CSR site CE4
+  neighbor 192.168.40.2
+   remote-as 65004
    address-family ipv4 unicast
     route-policy PASS in
     route-policy PASS out

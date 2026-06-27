@@ -63,8 +63,8 @@ Each phase adds one thing. If something breaks, you only need to look at what yo
 - 6 nodes in your topology: R1, R2, R3, R4, CE1, CE2
 
 > **Tight on RAM?** XRv9000 is memory-hungry. See [`docs/EVE-NG-RESOURCES.md`](docs/EVE-NG-RESOURCES.md)
-> for per-node sizing, KSM, and a light **CSR 1000v** CE pair (CE3/CE4) you can run instead of
-> CE1/CE2 to save ~8 GB.
+> for per-node sizing, KSM, and the light **CSR 1000v** CE pair (CE3/CE4) — extra L3VPN sites
+> you can power on instead of the heavy XR CEs when you don't need the L2VPN.
 
 **Good to know (but not required yet):**
 - Basic IOS XR CLI — how to enter config mode, `commit`, `show` commands
@@ -710,8 +710,8 @@ sr-mpls-iosxr-eveng-lab/
 │   ├── R4.txt
 │   ├── CE1.txt          ← XRv9000 CE (canonical)
 │   ├── CE2.txt
-│   ├── CE3-csr.txt      ← CSR 1000v light drop-in for CE1 (saves RAM)
-│   └── CE4-csr.txt      ← CSR 1000v light drop-in for CE2
+│   ├── CE3-csr.txt      ← CSR 1000v extra L3VPN site at R1 (light, Phase 8)
+│   └── CE4-csr.txt      ← CSR 1000v extra L3VPN site at R4 (light, Phase 8)
 ├── docs/
 │   ├── CONCEPTS.md      ← read after the lab — theory explained
 │   ├── CONFIG-GUIDE.md  ← the real configs explained top to bottom (PE/P/CE)
