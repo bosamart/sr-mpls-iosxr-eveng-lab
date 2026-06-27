@@ -26,6 +26,7 @@ Real `show`-command captures + analysis for each phase:
 - [Phase 5 — L3VPN over SR-MPLS](phase5-l3vpn-verify.md) ✅
 - [Phase 6 — L3VPN over SRv6 (uDT4)](phase6-srv6-verify.md) ✅
 - [Phase 7 — EVPN-VPWS over SRv6 (uDX2)](phase7-evpn-vpws-verify.md) ✅
+- [Phase 8 — SR-PCE + ODN (controller-driven SR-TE)](phase8-srpce-odn-verify.md) ✅ *(extension)*
 
 ## Key Configs
 > Device configs stored in `../configs/`

@@ -1,9 +1,10 @@
 # Phase 8 (Extension) — SR-PCE + ODN: controller-driven SR-TE
 
-> **Status: DESIGN — not yet built/verified in EVE-NG.** This is the plan + annotated
-> config to slot onto the existing 6-router diamond. Build it, then capture real `show`
-> output into `notes/phase8-srpce-odn-verify.md` (same as Phases 1–7). Exact IOS-XR
-> keywords below are best-effort for XRv9000 ~24.3.1 — confirm against the image as you go.
+> **Status: ✅ BUILT & VERIFIED (base ODN).** Validated in EVE-NG on 2026-06-27 — real
+> captures in [`../notes/phase8-srpce-odn-verify.md`](../notes/phase8-srpce-odn-verify.md):
+> PCE topology via BGP-LS, PCEP up, a `Color:100` route auto-creating a PCE-computed
+> policy, and a CE3→CE4 ping over it. **Variant B (affinity steering) below is the one
+> part not yet verified** — try it next. Exact IOS-XR keywords are for XRv9000 ~24.3.1.
 
 ---
 
@@ -265,6 +266,92 @@ traceroute vrf CUST-A 22.22.22.22 source 11.11.11.11   ! follows the PCE-compute
 
 Phase 4 taught you *what* an SR-TE policy is. Phase 8 is how that policy gets built and
 maintained automatically in a real network.
+
+---
+
+## Variant B — make ODN *visibly* steer (the dramatic demo)
+
+With `metric type igp`, the PCE picks the **shortest** path, so a traceroute looks like
+normal routing — the automation is real but invisible. To force the PCE onto the
+**non-shortest** "scenic" path R1→R2→R3→R4 (the same one you built by hand in Phase 4,
+but now computed on demand), add an **affinity constraint** that *excludes* the two links
+the short paths use.
+
+**Why these two links:** every path from R1 to R4 is one of —
+A `R1→R2→R4`, B `R1→R3→R4`, C `R1→R2→R3→R4` (scenic), D `R1→R3→R2→R4`.
+The scenic path **C** is the only one that uses *neither* the **R1–R3** link nor the
+**R2–R4** link. So tag those two links "AVOID" and exclude them → only C survives.
+
+**1. Tag the two links on the routers that own them** (both ends of each):
+
+```
+! --- R1 (owns the R1–R3 end: Gi0/0/0/3) ---
+segment-routing
+ traffic-eng
+  affinity-map
+   name AVOID bit-position 0
+  !
+  interface GigabitEthernet0/0/0/3
+   affinity
+    name AVOID
+   !
+  !
+ !
+!
+! --- R3 (owns the R3–R1 end: Gi0/0/0/2) ---  [same affinity-map + tag on Gi0/0/0/2]
+! --- R2 (owns the R2–R4 end: Gi0/0/0/3) ---  [same affinity-map + tag on Gi0/0/0/3]
+! --- R4 (owns the R4–R2 end: Gi0/0/0/2) ---  [same affinity-map + tag on Gi0/0/0/2]
+commit
+```
+
+> The affinity (admin-group) bit is flooded by IS-IS TE and reaches the PCE via BGP-LS,
+> so the controller knows which links are tagged. The `affinity-map` name→bit must be
+> consistent everywhere; the **bit-position** is what's actually advertised.
+
+**2. Add the constraint to the ODN template on R1:**
+
+```
+segment-routing
+ traffic-eng
+  on-demand color 100
+   dynamic
+    pcep
+    !
+    metric
+     type igp
+    !
+   !
+   constraints
+    affinity
+     exclude-any
+      name AVOID
+     !
+    !
+   !
+  !
+ !
+!
+commit
+```
+
+**3. Verify — now the path is the long way round:**
+
+```
+R1# show segment-routing traffic-eng policy        ! SID list now {16002,16003,16004}
+PCE# show pce lsp detail                            ! Computed path has 3 SIDs, metric 30
+CE3# traceroute 44.44.44.44 source 33.33.33.33      ! R1 -> R2 -> R3 -> R4 (3 hops)
+```
+
+You should see the PCE-computed SID list grow from a single `16004` to
+**`16002 → 16003 → 16004`**, accumulated metric **30** (3 hops) instead of 20, and a
+traceroute that visibly walks R1→R2→R3→R4 through the cross-link. Same scenic path as
+Phase 4 — but the PCE built it on demand from a *constraint*, not a hand-typed
+segment-list. Remove the colored route and it tears down automatically.
+
+> **Alternative constraints** worth trying once this works: `metric type latency` (needs
+> per-link delay via performance-measurement) for true latency-optimized paths, or
+> `disjoint-path` between two colors to compute two guaranteed link/node-disjoint paths
+> (the network-slicing pattern).
 
 ---
 

@@ -677,7 +677,8 @@ If all pings work, you have built a full service-provider network from scratch:
 **Want to go further? → [`docs/PHASE8-SR-PCE-ODN.md`](docs/PHASE8-SR-PCE-ODN.md)** — an optional
 extension that replaces the hand-built Phase 4 policy with **controller-driven SR-TE**: an
 SR-PCE node, BGP-LS topology feed, and color-based **ODN** (On-Demand Next-hop) automation —
-the model behind 5G transport / network slicing. *(Design ready; build & verify in EVE-NG.)*
+the model behind 5G transport / network slicing. ✅ Built & verified
+([`notes/phase8-srpce-odn-verify.md`](notes/phase8-srpce-odn-verify.md)).
 
 ---
 
