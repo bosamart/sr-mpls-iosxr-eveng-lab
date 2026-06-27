@@ -123,9 +123,10 @@ CE3# ping 44.44.44.44 source 33.33.33.33
 
 > **Path note:** the ODN template optimizes on **IGP metric**, so the PCE chose the
 > *shortest* path (`SID 16004`, metric 20). Correct behavior — but a traceroute looks
-> like normal routing because shortest *is* normal. To make ODN *visibly* steer onto a
-> non-shortest path, see **"Variant B — make ODN visibly steer"** in
-> [`../docs/PHASE8-SR-PCE-ODN.md`](../docs/PHASE8-SR-PCE-ODN.md).
+> like normal routing because shortest *is* normal. Forcing a non-shortest path via an
+> affinity constraint was attempted and found **not exposed under `on-demand color` on this
+> XRv9000 build** (see "Note on path constraints" in
+> [`../docs/PHASE8-SR-PCE-ODN.md`](../docs/PHASE8-SR-PCE-ODN.md)).
 
 **Conclusion:** Controller-driven SR-TE verified end to end — colored route →
 PCE-computed policy → customer traffic on it, fully automatic. Phase 8 complete.
