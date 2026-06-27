@@ -161,6 +161,11 @@ Three kinds of port on a PE:
 > Note the per-PE asymmetry: on **R4** the L2 port is **Gi0/0/0/0** and the L3 port is
 > **Gi0/0/0/1** (opposite of R1). Always check the topology table.
 
+> **Phase 8 extension:** R1 and R4 also carry a 5th port, `Gi0/0/0/4`, in `vrf CUST-A`
+> (R1 `192.168.30.1`, R4 `192.168.40.1`) for the light CSR customer sites CE3/CE4. It's
+> inert until those CEs are powered — see [`PHASE8-SR-PCE-ODN.md`](PHASE8-SR-PCE-ODN.md)
+> and [`EVE-NG-RESOURCES.md`](EVE-NG-RESOURCES.md).
+
 ## E. IS-IS — the underlay for both data planes
 
 ```

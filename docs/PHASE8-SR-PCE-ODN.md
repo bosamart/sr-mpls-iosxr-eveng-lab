@@ -65,7 +65,7 @@ The PCE is a **leaf** off R2 — single-homed, so it's never a transit hop. It e
    live map of the network.
 2. **R1/R4 register as PCCs.** Each headend opens a **PCEP** session to the PCE
    (`5.5.5.5`).
-3. **R4 colors its customer routes.** When R4 advertises CE2's prefixes over VPNv4, it
+3. **R4 colors its customer routes.** When R4 advertises CE4's prefixes over VPNv4, it
    stamps **color 100** on them.
 4. **ODN fires on R1.** R1 receives a route with color 100 and endpoint `4.4.4.4`, sees
    it has an **on-demand color 100** template, and asks the **PCE** (via PCEP) to compute
@@ -219,9 +219,9 @@ router bgp 100
 ```
 
 This is the trigger. R4 attaches **color 100** to the VPNv4 routes it advertises to R1.
-When R1 imports CE2's prefix carrying color 100, its ODN template (C-2) instantiates a
-PCE-computed policy to endpoint `4.4.4.4`. (To color in the other direction too, mirror
-this on R1 toward R4.)
+When R1 imports CE4's prefix (`44.44.44.44`) carrying color 100, its ODN template (C-2)
+instantiates a PCE-computed policy to endpoint `4.4.4.4`. (To color in the other direction
+too, mirror this on R1 toward R4.)
 
 ---
 
@@ -243,14 +243,14 @@ show bgp link-state link-state summary    ! BGP-LS session to PCE up, prefixes s
 **On R1 (PCC / headend):**
 ```
 show segment-routing traffic-eng pcc ipv4 peer   ! PCEP session to 5.5.5.5 = UP
-show bgp vrf CUST-A 22.22.22.22/32 detail         ! route carries Color:100 extcommunity
+show bgp vrf CUST-A 44.44.44.44/32 detail         ! route carries Color:100 extcommunity
 show segment-routing traffic-eng policy           ! a color-100 policy auto-appeared...
 ```
 - The auto-created policy should show **`Color: 100, End-point: 4.4.4.4`**, candidate path
   type **dynamic / on-demand**, and computed **by the PCE** (delegated), *not* an explicit
   segment-list you typed.
 ```
-traceroute vrf CUST-A 22.22.22.22 source 11.11.11.11   ! follows the PCE-computed path
+! from CE3:  traceroute 44.44.44.44 source 33.33.33.33   ! follows the PCE-computed path
 ```
 
 ---

@@ -38,3 +38,4 @@ https://github.com/bosamart/sr-mpls-iosxr-eveng-lab
 | Date | Topic | Outcome |
 |------|-------|---------|
 | 2026-06-24 | Full 7-phase lab: IS-IS, SR-MPLS, TI-LFA, SR-TE, L3VPN, SRv6, EVPN-VPWS | All phases complete ✅ |
+| 2026-06-27 | Phase 8 extension: SR-PCE + ODN (BGP-LS, PCEP, color-100 trigger); light CSR CE3/CE4 sites | ODN verified ✅ (affinity steering not exposed under ODN on this XRv9000 build) |

@@ -95,5 +95,5 @@ Give it a few minutes after all nodes are up, then check reclaim with `free -h` 
 ---
 
 *Companion to [`../README.md`](../README.md) and [`PHASE8-SR-PCE-ODN.md`](PHASE8-SR-PCE-ODN.md).
-CSR drop-in configs: [`../configs/CE3-csr.txt`](../configs/CE3-csr.txt),
+CSR additional-site configs: [`../configs/CE3-csr.txt`](../configs/CE3-csr.txt),
 [`../configs/CE4-csr.txt`](../configs/CE4-csr.txt).*

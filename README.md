@@ -18,7 +18,7 @@
 For those who already know IOS XR and just want to build it:
 
 1. Draw the topology in EVE-NG (6 nodes, links in the [table below](#topology--draw-this-in-eve-ng)).
-2. Paste each device's full config from [`configs/`](configs/) — `R1.txt`–`R4.txt`, `CE1.txt`, `CE2.txt` are cumulative (all 7 phases).
+2. Paste each device's full config from [`configs/`](configs/) — `R1.txt`–`R4.txt`, `CE1.txt`, `CE2.txt` are cumulative final state (Phases 1–7, plus the Phase 8 CE3/CE4 port on R1/R4).
 3. Verify end to end:
 
 ```
@@ -177,7 +177,7 @@ Every phase follows the same shape so you can build *and understand*:
 - **Verify + what to look for** — the `show` commands, and how to read their output.
 - **📋 verify log** — a link to `notes/phaseN-…-verify.md` with the **real captured output** from this lab plus analysis.
 
-Configs are **cumulative**: each phase adds to the previous one. The files in [`configs/`](configs/) are the *final* state of all 7 phases — if you'd rather build incrementally, paste only the block shown in each phase. Inline `!` comments in the blocks below mark per-router changes (e.g. `← 4.4.4.4 on R4`).
+Configs are **cumulative**: each phase adds to the previous one. The files in [`configs/`](configs/) are the *final* state of all phases — if you'd rather build incrementally, paste only the block shown in each phase. Inline `!` comments in the blocks below mark per-router changes (e.g. `← 4.4.4.4 on R4`).
 
 ---
 
@@ -703,9 +703,10 @@ the model behind 5G transport / network slicing. ✅ Built & verified
 sr-mpls-iosxr-eveng-lab/
 ├── README.md            ← start here (lab guide)
 ├── diagrams/
-│   └── topology.svg     ← the diamond topology (rendered at top of README)
+│   ├── topology.svg            ← the diamond topology (rendered at top of README)
+│   └── phase8-srpce-odn.svg    ← Phase 8 SR-PCE + ODN control-plane flow
 ├── configs/
-│   ├── R1.txt           ← full cumulative config (all 7 phases)
+│   ├── R1.txt           ← full cumulative config (all phases + Phase 8 CE3 port)
 │   ├── R2.txt
 │   ├── R3.txt
 │   ├── R4.txt
@@ -730,7 +731,8 @@ sr-mpls-iosxr-eveng-lab/
     ├── phase4-srte-verify.md
     ├── phase5-l3vpn-verify.md
     ├── phase6-srv6-verify.md
-    └── phase7-evpn-vpws-verify.md
+    ├── phase7-evpn-vpws-verify.md
+    └── phase8-srpce-odn-verify.md  ← extension: SR-PCE + ODN
 ```
 
 ---
