@@ -181,6 +181,36 @@ Configs are **cumulative**: each phase adds to the previous one. The files in [`
 
 ---
 
+## The paste ritual (do this for every phase)
+
+New to IOS-XR? This is the exact loop you repeat in **every** phase below. XR stages your edits in a
+**candidate buffer** and applies them only on `commit`, so a whole phase lands as one clean, atomic
+change you can verify:
+
+1. **Read the phase's "The config, line by line" block** — it shows the commands for one router
+   (usually **R1**).
+2. On that router, type `configure terminal` (or just `config`). **Nothing is live yet** — you're
+   editing a *candidate* copy.
+3. **Paste the block.**
+4. Type `commit`. **This is the moment it goes live.** (Made a mess? Type `abort` — it discards the
+   candidate and changes nothing.)
+5. **Repeat on the other routers the phase names**, changing the per-router values flagged inline
+   (e.g. `← 4.4.4.4 on R4`, the system-id, the SID index). When a phase says **"only R1 changes,"**
+   you're done after R1.
+6. Type `end`, then run the phase's **Verify** commands before moving on.
+
+```
+configure terminal
+  ... paste the phase block ...
+commit          ! nothing takes effect until here
+end
+```
+
+> **If an interface stays down** after commit, add `no shutdown` under it — brand-new XR interfaces
+> can come up admin-down. `rollback configuration last 1` undoes the most recent commit.
+
+---
+
 ## Phase 1 — IS-IS Baseline
 
 **Goal:** All 4 routers (R1–R4) can ping each other's loopbacks. This is the foundation everything else builds on.
@@ -188,6 +218,8 @@ Configs are **cumulative**: each phase adds to the previous one. The files in [`
 **Config files:** [`configs/R1.txt`](configs/R1.txt) through [`configs/R4.txt`](configs/R4.txt) — paste the IS-IS section for each router.
 
 ### The config, line by line (R1 example)
+
+*First time? → follow [the paste ritual](#the-paste-ritual-do-this-for-every-phase): `config` → paste → `commit`, then repeat per router (here R1→R4, changing only the system-id + SID index).*
 
 ```
 router isis CORE                       ! (1) name the IS-IS process "CORE"
