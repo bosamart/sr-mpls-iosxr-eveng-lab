@@ -209,6 +209,12 @@ end
 
 > **If an interface stays down** after commit, add `no shutdown` under it — brand-new XR interfaces
 > can come up admin-down. `rollback configuration last 1` undoes the most recent commit.
+>
+> **Copy-paste tips:** on GitHub every block below has a **copy button** (top-right on hover) — one
+> click grabs the whole block. Each block is complete and ends in `commit`, so once you're in
+> `config` a single paste **applies and commits** the whole phase. Where a block shows **R1**, change
+> only the per-router values flagged in the comments first (system-id, SID index, SRv6 source/locator,
+> the interface list).
 
 ---
 
@@ -259,6 +265,173 @@ commit
 
 > **Per-router change:** only the NET's system-id differs — R1 `...0001`, R2 `...0002`, R3 `...0003`, R4 `...0004`. And each router lists *its own* core interfaces (see the topology table).
 
+<details>
+<summary><b>📋 Copy per router — ready to paste</b> (complete Phase-1 delta, includes interface addressing)</summary>
+
+```
+! ===================== R1 =====================
+interface Loopback0
+ ipv4 address 1.1.1.1 255.255.255.255
+!
+interface GigabitEthernet0/0/0/1
+ ipv4 address 10.12.0.1 255.255.255.252
+!
+interface GigabitEthernet0/0/0/3
+ ipv4 address 10.13.0.1 255.255.255.252
+!
+router isis CORE
+ is-type level-2-only
+ net 49.0001.0000.0000.0001.00
+ address-family ipv4 unicast
+  metric-style wide
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R2 =====================
+interface Loopback0
+ ipv4 address 2.2.2.2 255.255.255.255
+!
+interface GigabitEthernet0/0/0/0
+ ipv4 address 10.12.0.2 255.255.255.252
+!
+interface GigabitEthernet0/0/0/1
+ ipv4 address 10.23.0.1 255.255.255.252
+!
+interface GigabitEthernet0/0/0/3
+ ipv4 address 10.24.0.1 255.255.255.252
+!
+router isis CORE
+ is-type level-2-only
+ net 49.0001.0000.0000.0002.00
+ address-family ipv4 unicast
+  metric-style wide
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R3 =====================
+interface Loopback0
+ ipv4 address 3.3.3.3 255.255.255.255
+!
+interface GigabitEthernet0/0/0/0
+ ipv4 address 10.23.0.2 255.255.255.252
+!
+interface GigabitEthernet0/0/0/2
+ ipv4 address 10.13.0.2 255.255.255.252
+!
+interface GigabitEthernet0/0/0/4
+ ipv4 address 10.34.0.1 255.255.255.252
+!
+router isis CORE
+ is-type level-2-only
+ net 49.0001.0000.0000.0003.00
+ address-family ipv4 unicast
+  metric-style wide
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/2
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/4
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R4 =====================
+interface Loopback0
+ ipv4 address 4.4.4.4 255.255.255.255
+!
+interface GigabitEthernet0/0/0/2
+ ipv4 address 10.24.0.2 255.255.255.252
+!
+interface GigabitEthernet0/0/0/3
+ ipv4 address 10.34.0.2 255.255.255.252
+!
+router isis CORE
+ is-type level-2-only
+ net 49.0001.0000.0000.0004.00
+ address-family ipv4 unicast
+  metric-style wide
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/2
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+commit
+```
+
+> R4's `Gi0/0/0/0`/`Gi0/0/0/1` are customer/L2 ports (added in Phases 5–7) — not in IS-IS.
+
+</details>
+
 **✅ Verify — run on R1:**
 ```
 show isis neighbors            ! are the adjacencies up?
@@ -306,6 +479,71 @@ commit
 2. **`prefix-sid index 1`** (under `Loopback0`) — assigns this router an **index**, not a label. The actual label = **SRGB base (16000) + index**. So index 1 → label **16001**, index 4 → **16004**. You configure the *index*; IS-IS floods it; every other router computes the same label. Change it per router: R1 `1`, R2 `2`, R3 `3`, R4 `4`.
 
 > **Index vs label — why indexes?** If you ever change the SRGB base, every label shifts but the *indexes* stay the same, so configs don't break. The index is the portable identity; the label is just base + index.
+
+<details>
+<summary><b>📋 Copy per router — ready to paste</b></summary>
+
+```
+! ===================== R1 =====================
+router isis CORE
+ address-family ipv4 unicast
+  segment-routing mpls
+ !
+ interface Loopback0
+  address-family ipv4 unicast
+   prefix-sid index 1
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R2 =====================
+router isis CORE
+ address-family ipv4 unicast
+  segment-routing mpls
+ !
+ interface Loopback0
+  address-family ipv4 unicast
+   prefix-sid index 2
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R3 =====================
+router isis CORE
+ address-family ipv4 unicast
+  segment-routing mpls
+ !
+ interface Loopback0
+  address-family ipv4 unicast
+   prefix-sid index 3
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R4 =====================
+router isis CORE
+ address-family ipv4 unicast
+  segment-routing mpls
+ !
+ interface Loopback0
+  address-family ipv4 unicast
+   prefix-sid index 4
+  !
+ !
+!
+commit
+```
+
+</details>
 
 **✅ Verify on R1:**
 ```
@@ -357,6 +595,99 @@ commit
 2. **`fast-reroute per-prefix ti-lfa`** — selects **Topology-Independent LFA** as the algorithm. TI-LFA computes the post-convergence path and, if needed, encodes it as an explicit SR label stack — so a loop-free backup always exists, regardless of topology.
 
 > Add these two lines under **every transit interface on every router** (not the loopback). A backup is only useful if each hop along the way also has one.
+
+<details>
+<summary><b>📋 Copy per router — ready to paste</b></summary>
+
+```
+! ===================== R1 =====================
+router isis CORE
+ interface GigabitEthernet0/0/0/1
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R2 =====================
+router isis CORE
+ interface GigabitEthernet0/0/0/0
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R3 =====================
+router isis CORE
+ interface GigabitEthernet0/0/0/0
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/2
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/4
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R4 =====================
+router isis CORE
+ interface GigabitEthernet0/0/0/2
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  address-family ipv4 unicast
+   fast-reroute per-prefix
+   fast-reroute per-prefix ti-lfa
+  !
+ !
+!
+commit
+```
+
+</details>
 
 **✅ Verify on R1:**
 ```
@@ -421,6 +752,36 @@ commit
 5. **`candidate-paths / preference 100 / explicit segment-list …`** — a policy can hold several candidate paths; the highest **preference** wins. Here one **explicit** path points at our segment list.
 
 > **Only R1 changes.** R2, R3, R4 get nothing new — they already advertise their prefix-SIDs from Phase 2. All the path intelligence lives at the headend.
+
+<details>
+<summary><b>📋 Copy R1 — ready to paste</b> (SR-TE headend only)</summary>
+
+```
+! ===================== R1 (only) =====================
+segment-routing
+ traffic-eng
+  segment-list SCENIC-R1-TO-R4
+   index 10 mpls label 16002
+   index 20 mpls label 16003
+   index 30 mpls label 16004
+  !
+  policy R1-TO-R4-SCENIC
+   color 100 end-point ipv4 4.4.4.4
+   autoroute
+    include ipv4 4.4.4.4/32
+   !
+   candidate-paths
+    preference 100
+     explicit segment-list SCENIC-R1-TO-R4
+    !
+   !
+  !
+ !
+!
+commit
+```
+
+</details>
 
 **✅ Verify on R1:**
 ```
@@ -501,6 +862,161 @@ commit
 
 > ⚠️ **If your eBGP session is up but no prefixes arrive, this is almost always it.** IOS XR mandates the `route-policy` both directions.
 
+<details>
+<summary><b>📋 Copy per router — ready to paste</b> (L3VPN over SR-MPLS — the SRv6 encap comes in Phase 6)</summary>
+
+```
+! ===================== R1 (PE) =====================
+vrf CUST-A
+ address-family ipv4 unicast
+  import route-target
+   100:1
+  !
+  export route-target
+   100:1
+  !
+ !
+!
+route-policy PASS
+  pass
+end-policy
+!
+interface GigabitEthernet0/0/0/0
+ vrf CUST-A
+ ipv4 address 192.168.11.1 255.255.255.252
+!
+router bgp 100
+ bgp router-id 1.1.1.1
+ address-family vpnv4 unicast
+ !
+ neighbor 4.4.4.4
+  remote-as 100
+  update-source Loopback0
+  address-family vpnv4 unicast
+  !
+ !
+ vrf CUST-A
+  rd 100:1
+  address-family ipv4 unicast
+   redistribute connected
+  !
+  neighbor 192.168.11.2
+   remote-as 65001
+   address-family ipv4 unicast
+    route-policy PASS in
+    route-policy PASS out
+   !
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R4 (PE) =====================
+vrf CUST-A
+ address-family ipv4 unicast
+  import route-target
+   100:1
+  !
+  export route-target
+   100:1
+  !
+ !
+!
+route-policy PASS
+  pass
+end-policy
+!
+interface GigabitEthernet0/0/0/1
+ vrf CUST-A
+ ipv4 address 192.168.44.1 255.255.255.252
+!
+router bgp 100
+ bgp router-id 4.4.4.4
+ address-family vpnv4 unicast
+ !
+ neighbor 1.1.1.1
+  remote-as 100
+  update-source Loopback0
+  address-family vpnv4 unicast
+  !
+ !
+ vrf CUST-A
+  rd 100:1
+  address-family ipv4 unicast
+   redistribute connected
+  !
+  neighbor 192.168.44.2
+   remote-as 65002
+   address-family ipv4 unicast
+    route-policy PASS in
+    route-policy PASS out
+   !
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== CE1 (AS 65001) =====================
+route-policy PASS
+  pass
+end-policy
+!
+interface Loopback0
+ ipv4 address 11.11.11.11 255.255.255.255
+!
+interface GigabitEthernet0/0/0/1
+ ipv4 address 192.168.11.2 255.255.255.252
+!
+router bgp 65001
+ bgp router-id 11.11.11.11
+ address-family ipv4 unicast
+  network 11.11.11.11/32
+ !
+ neighbor 192.168.11.1
+  remote-as 100
+  address-family ipv4 unicast
+   route-policy PASS in
+   route-policy PASS out
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== CE2 (AS 65002) =====================
+route-policy PASS
+  pass
+end-policy
+!
+interface Loopback0
+ ipv4 address 22.22.22.22 255.255.255.255
+!
+interface GigabitEthernet0/0/0/0
+ ipv4 address 192.168.44.2 255.255.255.252
+!
+router bgp 65002
+ bgp router-id 22.22.22.22
+ address-family ipv4 unicast
+  network 22.22.22.22/32
+ !
+ neighbor 192.168.44.1
+  remote-as 100
+  address-family ipv4 unicast
+   route-policy PASS in
+   route-policy PASS out
+  !
+ !
+!
+commit
+```
+
+</details>
+
 **✅ Verify:**
 ```
 show bgp vpnv4 unicast summary                  ! is the PE↔PE session up + prefixes received?
@@ -555,13 +1071,228 @@ router isis CORE
   address-family ipv6 unicast          ! (5) enable IPv6 AF on loopback + links
   !
  !
- interface GigabitEthernet0/0/0/X      ! all transit interfaces
+ interface GigabitEthernet0/0/0/1      ! R1's transit links — one stanza per transit interface
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
   address-family ipv6 unicast
   !
  !
 !
 commit
 ```
+
+> **Change per router before pasting:** source-address `::1`→`::2/::3/::4`, locator prefix
+> `bb00:1`→`bb00:2/3/4`, and list *that router's own* transit interfaces under IPv6 —
+> R1 `Gi0/0/0/1,3` · R2 `Gi0/0/0/0,1,3` · R3 `Gi0/0/0/0,2,4` · R4 `Gi0/0/0/2,3`.
+
+<details>
+<summary><b>📋 Copy per router — ready to paste</b> (Part A · SRv6 locator on R1–R4)</summary>
+
+```
+! ===================== R1 =====================
+segment-routing
+ srv6
+  encapsulation
+   source-address fcbb:bb00:1::1
+  !
+  locators
+   locator MAIN
+    micro-segment behavior unode psp-usd
+    prefix fcbb:bb00:1::/48
+   !
+  !
+ !
+!
+interface Loopback0
+ ipv6 address fcbb:bb00:1::1/128
+!
+interface GigabitEthernet0/0/0/1
+ ipv6 enable
+!
+interface GigabitEthernet0/0/0/3
+ ipv6 enable
+!
+router isis CORE
+ address-family ipv6 unicast
+  metric-style wide
+  segment-routing srv6
+   locator MAIN
+  !
+ !
+ interface Loopback0
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  address-family ipv6 unicast
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R2 =====================
+segment-routing
+ srv6
+  encapsulation
+   source-address fcbb:bb00:2::1
+  !
+  locators
+   locator MAIN
+    micro-segment behavior unode psp-usd
+    prefix fcbb:bb00:2::/48
+   !
+  !
+ !
+!
+interface Loopback0
+ ipv6 address fcbb:bb00:2::1/128
+!
+interface GigabitEthernet0/0/0/0
+ ipv6 enable
+!
+interface GigabitEthernet0/0/0/1
+ ipv6 enable
+!
+interface GigabitEthernet0/0/0/3
+ ipv6 enable
+!
+router isis CORE
+ address-family ipv6 unicast
+  metric-style wide
+  segment-routing srv6
+   locator MAIN
+  !
+ !
+ interface Loopback0
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  address-family ipv6 unicast
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R3 =====================
+segment-routing
+ srv6
+  encapsulation
+   source-address fcbb:bb00:3::1
+  !
+  locators
+   locator MAIN
+    micro-segment behavior unode psp-usd
+    prefix fcbb:bb00:3::/48
+   !
+  !
+ !
+!
+interface Loopback0
+ ipv6 address fcbb:bb00:3::1/128
+!
+interface GigabitEthernet0/0/0/0
+ ipv6 enable
+!
+interface GigabitEthernet0/0/0/2
+ ipv6 enable
+!
+interface GigabitEthernet0/0/0/4
+ ipv6 enable
+!
+router isis CORE
+ address-family ipv6 unicast
+  metric-style wide
+  segment-routing srv6
+   locator MAIN
+  !
+ !
+ interface Loopback0
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/2
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/4
+  address-family ipv6 unicast
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R4 =====================
+segment-routing
+ srv6
+  encapsulation
+   source-address fcbb:bb00:4::1
+  !
+  locators
+   locator MAIN
+    micro-segment behavior unode psp-usd
+    prefix fcbb:bb00:4::/48
+   !
+  !
+ !
+!
+interface Loopback0
+ ipv6 address fcbb:bb00:4::1/128
+!
+interface GigabitEthernet0/0/0/2
+ ipv6 enable
+!
+interface GigabitEthernet0/0/0/3
+ ipv6 enable
+!
+router isis CORE
+ address-family ipv6 unicast
+  metric-style wide
+  segment-routing srv6
+   locator MAIN
+  !
+ !
+ interface Loopback0
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/2
+  address-family ipv6 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/3
+  address-family ipv6 unicast
+  !
+ !
+!
+commit
+```
+
+</details>
 
 **What each part does:**
 
@@ -596,6 +1327,51 @@ commit
 7. **`segment-routing srv6 / locator MAIN / alloc mode per-vrf`** — allocate a **uDT4** service SID for the VRF (one per VRF). uDT4 = "decapsulate and do an IPv4 VRF lookup" — the SRv6 form of `End.DT4`. This single SID replaces the MPLS VPN label.
 
 > **One SID does two jobs:** the **locator** part routes the packet to the egress PE; the **function** part (uDT4) tells that PE to pop and look up the VRF. No separate transport + VPN labels.
+
+<details>
+<summary><b>📋 Copy per router — ready to paste</b> (Part B · point BGP at SRv6 — R1 & R4)</summary>
+
+```
+! ===================== R1 =====================
+router bgp 100
+ neighbor 4.4.4.4
+  address-family vpnv4 unicast
+   encapsulation-type srv6
+  !
+ !
+ vrf CUST-A
+  address-family ipv4 unicast
+   segment-routing srv6
+    locator MAIN
+    alloc mode per-vrf
+   !
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R4 =====================
+router bgp 100
+ neighbor 1.1.1.1
+  address-family vpnv4 unicast
+   encapsulation-type srv6
+  !
+ !
+ vrf CUST-A
+  address-family ipv4 unicast
+   segment-routing srv6
+    locator MAIN
+    alloc mode per-vrf
+   !
+  !
+ !
+!
+commit
+```
+
+</details>
 
 **✅ Verify:**
 ```
@@ -675,6 +1451,85 @@ commit
 ```
 
 > ⚠️ New XR L2 interfaces can come up **admin-down** — if the xconnect is down, `no shutdown` the attachment-circuit ports (R1 Gi0/0/0/2, R4 Gi0/0/0/0).
+
+<details>
+<summary><b>📋 Copy per router — ready to paste</b> (PEs + CE attachment ports)</summary>
+
+```
+! ===================== R1 (PE) =====================
+evpn
+ segment-routing srv6
+  locator MAIN
+ !
+!
+interface GigabitEthernet0/0/0/2
+ l2transport
+!
+l2vpn
+ xconnect group EVPN-VPWS
+  p2p CE1-CE2-L2
+   interface GigabitEthernet0/0/0/2
+   neighbor evpn evi 200 service 1 segment-routing srv6
+  !
+ !
+!
+router bgp 100
+ address-family l2vpn evpn
+ !
+ neighbor 4.4.4.4
+  address-family l2vpn evpn
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== R4 (PE) =====================
+evpn
+ segment-routing srv6
+  locator MAIN
+ !
+!
+interface GigabitEthernet0/0/0/0
+ l2transport
+!
+l2vpn
+ xconnect group EVPN-VPWS
+  p2p CE1-CE2-L2
+   interface GigabitEthernet0/0/0/0
+   neighbor evpn evi 200 service 1 segment-routing srv6
+  !
+ !
+!
+router bgp 100
+ address-family l2vpn evpn
+ !
+ neighbor 1.1.1.1
+  address-family l2vpn evpn
+  !
+ !
+!
+commit
+```
+
+```
+! ===================== CE1 (L2 attachment) =====================
+interface GigabitEthernet0/0/0/2
+ ipv4 address 172.16.0.1 255.255.255.0
+!
+commit
+```
+
+```
+! ===================== CE2 (L2 attachment) =====================
+interface GigabitEthernet0/0/0/1
+ ipv4 address 172.16.0.2 255.255.255.0
+!
+commit
+```
+
+</details>
 
 **✅ Verify:**
 ```
