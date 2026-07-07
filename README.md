@@ -175,6 +175,7 @@ Every phase follows the same shape so you can build *and understand*:
 - **Why it matters** — the operator/interview reason this feature exists.
 - **The config, line by line** — the exact block to paste, with a numbered breakdown of what each command does and why.
 - **Verify + what to look for** — the `show` commands, and how to read their output.
+- **🔬 On the wire** — a Wireshark capture cue: which EVE-NG link to tap and what to find in the packet bytes. This is the *data plane* half — `show` output is what the router intends, the capture is what actually crosses the wire. Saved captures live in [`captures/`](captures/).
 - **📋 verify log** — a link to `notes/phaseN-…-verify.md` with the **real captured output** from this lab plus analysis.
 
 Configs are **cumulative**: each phase adds to the previous one. The files in [`configs/`](configs/) are the *final* state of all phases — if you'd rather build incrementally, paste only the block shown in each phase. Inline `!` comments in the blocks below mark per-router changes (e.g. `← 4.4.4.4 on R4`).
@@ -271,6 +272,8 @@ ping 4.4.4.4 source Loopback0  ! does traffic actually flow?
 - `show route 4.4.4.4/32` → reachable as `i L2` over **two equal-cost paths** (via R2 *and* via R3) — that's the diamond giving you ECMP. The non-best path is tagged `(!)`.
 - `ping 4.4.4.4 source Loopback0` → `!!!!!` (5/5).
 
+> **🔬 On the wire** — *Capture* any core link (R1–R2). *Filter:* `isis`. *Look for:* IS-IS PDUs riding **directly on Layer 2** — no IP header at all (the OSPF contrast). You'll see P2P **IIH** hellos, **LSP**s, and CSNP/PSNP. Open an LSP and read its TLVs: Area Address `49.0001`, Extended IS Reachability (wide metric, TLV 22), IP Reachability (TLV 135).
+
 📋 **Real captured output + analysis:** [`notes/phase1-isis-verify.md`](notes/phase1-isis-verify.md)
 
 ---
@@ -322,6 +325,8 @@ ping 4.4.4.4 source Loopback0
 
 > **What just happened:** IS-IS is now the label-distribution protocol. No LDP, no RSVP. "16004 means reach R4" and every router agrees automatically. You've replaced an entire protocol with two config lines.
 
+> **🔬 On the wire** — *Capture* R1–R2 while `ping 4.4.4.4 source Loopback0`. *Filter:* `mpls`. *Look for:* an **MPLS label** on the data packet (`16004` = "reach R4"). In the IS-IS LSPs the SR extensions are visible too: the **Prefix-SID sub-TLV** (the index) inside TLV 135, and the **SR Capabilities / SRGB** in the Router Capability TLV — IS-IS distributing labels itself, no LDP anywhere.
+
 📋 **Real captured output + analysis:** [`notes/phase2-srmpls-verify.md`](notes/phase2-srmpls-verify.md)
 
 ---
@@ -368,6 +373,8 @@ show isis fast-reroute 2.2.2.2/32 detail ! which neighbor the repair goes throug
 > **Why coverage isn't 100%:** on a 4-node diamond, one prefix has no loop-free alternate and stays unprotected. That's expected, not a bug — and a great thing to be able to explain. You'll also notice the backup may show as **`Local-LFA`** rather than a TI-LFA tunnel: when the R2–R3 cross-link already provides a directly loop-free path, a simple LFA suffices and TI-LFA only builds an explicit repair tunnel when none exists.
 
 **Test it live:** start `ping 2.2.2.2 source 1.1.1.1 count 1000`, then `shutdown` R1's Gi0/0/0/1 (R1→R2) mid-ping on another session. Expect **near-zero loss** (in this lab: a single packet) as traffic shifts to the pre-installed R3 backup.
+
+> **🔬 On the wire** — *Capture the backup link R1–R3*, start `ping 2.2.2.2 source 1.1.1.1`, then `shutdown` R1–R2 mid-ping. *Filter:* `mpls`. *Look for:* **nothing** for that flow on R1–R3 before the failure; the instant R1–R2 drops, packets appear on R1–R3 carrying the **pre-installed TI-LFA repair label stack**. The near-zero gap in the capture *is* your sub-50 ms reroute, shown in packets rather than claimed by a counter.
 
 📋 **Real captured output (incl. the live-failover test) + analysis:** [`notes/phase3-tilfa-verify.md`](notes/phase3-tilfa-verify.md)
 
@@ -427,6 +434,8 @@ traceroute 4.4.4.4 source 1.1.1.1         ! does traffic take the scenic path?
 - **`traceroute 4.4.4.4`** → **3 hops**: `10.12.0.2 [Labels 16003/16004]` (R2) → `10.23.0.2 [Label 16004]` (R3, via the cross-link) → `10.34.0.2` (R4). Watch the **label stack shrink one SID per hop** — that's the proof the headend imposed the whole path.
 
 > **What just happened:** R1 pushed the stack {16002,16003,16004}. Each P router popped the top label and forwarded — no per-tunnel config anywhere but R1. That's the power of SR-TE: all intelligence at the headend, a stateless core.
+
+> **🔬 On the wire** — *Capture* R1–R2 during `traceroute 4.4.4.4 source 1.1.1.1`. *Filter:* `mpls`. *Look for:* R1 imposes the **full stack `{16002, 16003, 16004}`**. Capture each hop in turn and watch it **shrink one label per hop** — R2→R3 shows `{16003, 16004}`, R3→R4 shows `{16004}`. That shrinking stack is the visual proof the headend encoded the whole path and the core holds no per-tunnel state.
 
 📋 **Real captured output + analysis:** [`notes/phase4-srte-verify.md`](notes/phase4-srte-verify.md)
 
@@ -506,6 +515,8 @@ ping vrf CUST-A 22.22.22.22 source 11.11.11.11   ! end to end (also try from CE1
 - **Ping** CE1→CE2 → `!!!!!`.
 
 > **Bonus — RD vs RT demo:** the shipped `R1.txt` / `R4.txt` also define a second VRF **`CUST-B`** (`rd 100:2`, `rt 100:2`). It carries no CE; it exists to make the RD-vs-RT distinction concrete. In the verify capture you can see the **same prefix `192.168.11.0/30` appear under both RD `100:1` and RD `100:2`** — identical IP, two VRFs, kept unique purely by the RD. Compare `show bgp vpnv4 unicast rd 100:1` against `rd 100:2`. Skip it if you only care about the core path.
+
+> **🔬 On the wire** — *Capture* R1–R2 during the CE1→CE2 VRF ping. *Filter:* `mpls`. *Look for:* a **two-label stack** — outer **transport SID** (`16004`, reach R4) + inner **VPN label** (bottom-of-stack, picks the VRF). The core switches on the outer label only and never sees `11.11.11.11`. Then capture the PE↔PE session (`tcp.port == 179`): the **MP-BGP VPNv4 UPDATE** carries the RD `100:1`, the VPN label, and the route-target extended community — the control plane that programmed that inner label.
 
 📋 **Real captured output (incl. the RD demo + CE1→CE2 ping) + analysis:** [`notes/phase5-l3vpn-verify.md`](notes/phase5-l3vpn-verify.md)
 
@@ -599,6 +610,8 @@ ping vrf CUST-A 22.22.22.22 source 11.11.11.11
 - **`show cef vrf CUST-A 22.22.22.22 detail`** → the money shot: `SRv6 Headend` with **`H.Encaps.Red SID-list {fcbb:bb00:4:e0xx::}`** — R1 encapsulating the customer packet into IPv6 toward **R4's uDT4 SID**, no MPLS label.
 - **Ping** CE1→CE2 → `!!!!!`, now riding SRv6.
 
+> **🔬 On the wire** — *Capture* R1–R2 during the same VRF ping. *Filter:* `ipv6` (note: **no `mpls` now**). *Look for:* a **native IPv6 packet** — outer destination = R4's **uDT4 SID** `fcbb:bb00:4:e0xx::`, source `fcbb:bb00:1::1`. One SID does both jobs (the locator routes to R4, the uDT4 function = VRF lookup); there is **no MPLS label stack at all**. Put this capture next to Phase 5's two-label MPLS packet — same service, completely different data plane.
+
 📋 **Real captured output + analysis:** [`notes/phase6-srv6-verify.md`](notes/phase6-srv6-verify.md)
 
 ---
@@ -677,6 +690,8 @@ show arp                          ! from CE1 — did we learn CE2's MAC?
 - **`show evpn evi detail`** → **EVI 200**, type **VPWS (vlan-unaware)**, auto RT (e.g. `100:200`).
 - **CE1 `ping 172.16.0.2`** → `!!!!!`.
 - **CE1 `show arp`** → CE1 has learned **CE2's MAC** (Dynamic) on the L2 port — the real proof it's genuine Layer 2 (MAC learning across the pseudowire), not routing.
+
+> **🔬 On the wire** — *Capture* R1–R2 during the CE1→CE2 same-subnet ping. *Filter:* `ipv6`. *Look for:* the customer's **Ethernet frame carried inside IPv6** toward R4's **uDX2 SID** `fcbb:bb00:4:e000::` — decode into it and you'll find the raw L2 frame (CE1 MAC → CE2 MAC), **not** a routed IP packet. That inner Ethernet is the proof it's genuine Layer 2. On the control plane (`bgp`), the **EVPN Route-Type 1** (Ethernet A-D) for **EVI 200** is what stitched the pseudowire.
 
 📋 **Real captured output + analysis:** [`notes/phase7-evpn-vpws-verify.md`](notes/phase7-evpn-vpws-verify.md)
 
