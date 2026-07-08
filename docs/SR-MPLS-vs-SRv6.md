@@ -61,7 +61,7 @@ without the customer noticing.
 
 ---
 
-## Applied to a mobile operator (Cellcard context)
+## Applied to a mobile operator
 
 For a 5G-era mobile operator: existing transport is almost certainly MPLS today
 (SR-MPLS now), while new 5G transport and longer-term simplification point toward
